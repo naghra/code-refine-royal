@@ -227,7 +227,10 @@ const appConfigs: Record<string, AppConfig> = {
     fields: [
       { key: "cloaking_enabled", label: "تفعيل نظام الكلوكينج", placeholder: "", type: "toggle" },
       { key: "api_url", label: "رابط API الوصف (Supabase Function URL)", placeholder: "https://xxxxx.supabase.co/functions/v1/get-product-description", type: "text", helpText: "رابط Edge Function في حساب Supabase الخارجي" },
-      { key: "supabase_anon_key", label: "Supabase Anon Key (اختياري)", placeholder: "eyJhbGci...", type: "text", helpText: "مفتاح anon الخاص بمشروع Supabase الخارجي إذا كان مطلوباً" },
+      { key: "supabase_anon_key", label: "Supabase Anon Key", placeholder: "eyJhbGci...", type: "text", helpText: "مفتاح anon الخاص بمشروع Supabase الخارجي" },
+      { key: "supabase_url", label: "Supabase URL", placeholder: "https://xxxxx.supabase.co", type: "text", helpText: "رابط مشروع Supabase الخارجي (مثال: https://xxxxx.supabase.co)" },
+      { key: "supabase_service_role_key", label: "Supabase Service Role Key", placeholder: "eyJhbGci...", type: "text", helpText: "مفتاح Service Role للكتابة في قاعدة البيانات الخارجية (مطلوب لحفظ الطلبات)" },
+      { key: "sync_orders", label: "حفظ الطلبات في الحساب الخارجي", placeholder: "", type: "toggle" },
     ],
   },
 };
