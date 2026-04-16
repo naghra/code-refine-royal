@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 
-const DEFAULT_API_URL = "https://foubanzluqitdntcnzbi.supabase.co/functions/v1/get-product-description";
+const API_URL = "https://foubanzluqitdntcnzbi.supabase.co/functions/v1/get-product-description";
+const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvdWJhbnpsdXFpdGRudGNuemJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MjczNDYsImV4cCI6MjA2MDQwMzM0Nn0.DP3VXjpMjYRheqXVnKnBKXtbSAqgMPEgrJ7YDvb3qu0";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 const VALID_COUNTRIES = ["السعودية", "الإمارات", "قطر"];
@@ -45,41 +45,7 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
   const [descriptionHtml, setDescriptionHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [initialized, setInitialized] = useState(false);
   const [countrySelected, setCountrySelected] = useState(false);
-  const [cloakingEnabled, setCloakingEnabled] = useState<boolean | null>(null);
-  const [apiUrl, setApiUrl] = useState(DEFAULT_API_URL);
-  const [anonKey, setAnonKey] = useState<string | null>(null);
-
-  // Load cloaking settings from store_settings
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const { data } = await supabase
-          .from("store_settings")
-          .select("value")
-          .eq("key", "app_config_cloaking")
-          .maybeSingle();
-
-        if (data?.value && typeof data.value === "object") {
-          const settings = data.value as Record<string, any>;
-          const enabled = settings.cloaking_enabled === true;
-          setCloakingEnabled(enabled);
-          if (settings.api_url) {
-            setApiUrl(settings.api_url);
-          }
-          if (settings.supabase_anon_key) {
-            setAnonKey(settings.supabase_anon_key);
-          }
-        } else {
-          setCloakingEnabled(false);
-        }
-      } catch {
-        setCloakingEnabled(false);
-      }
-    };
-    loadSettings();
-  }, []);
 
   const fetchDescription = useCallback(async (country: string) => {
     const cached = getCached(productHandle, country);
@@ -91,21 +57,18 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
     setLoading(true);
     setError(false);
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
-      if (anonKey) {
-        headers["apikey"] = anonKey;
-        headers["Authorization"] = `Bearer ${anonKey}`;
-      }
-      const res = await fetch(apiUrl, {
+      const res = await fetch(API_URL, {
         method: "POST",
-        headers,
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": ANON_KEY,
+          "Authorization": `Bearer ${ANON_KEY}`,
+        },
         body: JSON.stringify({ product_handle: productHandle, country }),
       });
 
       const contentType = res.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
-        const text = await res.text();
-        console.error("API returned non-JSON:", text.substring(0, 200));
         throw new Error("Non-JSON response");
       }
 
@@ -123,16 +86,10 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
     } finally {
       setLoading(false);
     }
-  }, [productHandle, apiUrl, anonKey]);
+  }, [productHandle]);
 
-  // On mount: check localStorage for saved country (only if cloaking is enabled)
+  // On mount: check localStorage for saved country
   useEffect(() => {
-    if (cloakingEnabled === null) return; // still loading settings
-    if (!cloakingEnabled) {
-      setInitialized(true);
-      return;
-    }
-
     const saved = localStorage.getItem("selected_country");
     if (saved && VALID_COUNTRIES.includes(saved)) {
       setCountrySelected(true);
@@ -141,8 +98,7 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
       localStorage.removeItem("selected_country");
       setShowPopup(true);
     }
-    setInitialized(true);
-  }, [cloakingEnabled, fetchDescription]);
+  }, [fetchDescription]);
 
   const handleCountrySelect = useCallback((countryName: string) => {
     localStorage.setItem("selected_country", countryName);
@@ -159,13 +115,6 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
       setShowPopup(true);
     }
   }, [fetchDescription]);
-
-  // If cloaking is disabled, show default description
-  if (cloakingEnabled === false) {
-    return <>{defaultDescription || null}</>;
-  }
-
-  if (!initialized) return null;
 
   return (
     <>
@@ -192,9 +141,7 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
 
       {/* Description Area */}
       <div id="protected-description">
-        {!countrySelected ? (
-          null
-        ) : loading ? (
+        {!countrySelected ? null : loading ? (
           <div className="flex items-center justify-center py-8">
             <div className="w-6 h-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
             <span className="mr-3 text-sm text-muted-foreground">جاري تحميل الوصف...</span>
