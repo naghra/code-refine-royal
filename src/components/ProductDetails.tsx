@@ -5,6 +5,7 @@ import LoginModal from "@/components/LoginModal";
 import CheckoutModal from "@/components/CheckoutModal";
 
 import InlineOrderForm from "@/components/InlineOrderForm";
+import AntibotDescription from "@/components/AntibotDescription";
 import fallbackImage from "@/assets/product-main.jpg";
 import SaveBadge from "@/components/SaveBadge";
 import barcodeIcon from "@/assets/barcode-icon.png";
@@ -115,6 +116,7 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
   const savings = compareAtPrice > price ? compareAtPrice - price : 0;
   const skuCode = product?.sku || "7287120302040";
   const inStock = product ? product.inventory > 0 : true;
+  const isAntibot = product?.tags?.includes("antibot") ?? false;
 
 
 
@@ -218,6 +220,16 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
 
         {/* Description */}
         <div className="mb-5">
+          {isAntibot ? (
+            <AntibotDescription
+              productHandle={product?.tags?.find(t => t !== "antibot") || product?.id || ""}
+              defaultDescription={
+                <article className={`relative overflow-hidden transition-all duration-300 ${showFullDescription ? "max-h-[2000px]" : "max-h-[200px]"}`}>
+                  {renderNonAntibotDescription()}
+                </article>
+              }
+            />
+          ) : (
             <>
               <article
                 className={`relative overflow-hidden transition-all duration-300 ${
@@ -233,7 +245,7 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
                 {showFullDescription ? "عرض أقل" : "قراءة المزيد"}
               </button>
             </>
-
+          )}
         </div>
 
         {/* Model number */}
