@@ -244,7 +244,7 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
                 {showFullDescription ? "عرض أقل" : "قراءة المزيد"}
               </button>
             </>
-          )}
+
         </div>
 
         {/* Model number */}
