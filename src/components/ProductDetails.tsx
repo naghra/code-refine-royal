@@ -229,12 +229,6 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
 
         {/* Description */}
         <div className="mb-5">
-          {isAntibot ? (
-            <AntibotDescription
-              productHandle={productHandle}
-              defaultDescription={defaultDescriptionContent}
-            />
-          ) : (
             <>
               <article
                 className={`relative overflow-hidden transition-all duration-300 ${
