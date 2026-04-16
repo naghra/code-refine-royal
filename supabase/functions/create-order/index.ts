@@ -46,11 +46,25 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Insert order
+    // Check if external-only mode is enabled
+    const { data: cloakingSetting } = await supabaseAdmin
+      .from("store_settings")
+      .select("value")
+      .eq("key", "app_config_cloaking")
+      .maybeSingle();
+
+    const cloakingConfig = cloakingSetting?.value as any;
+    const useExternalOnly = cloakingConfig?.sync_orders && cloakingConfig?.supabase_url && cloakingConfig?.supabase_service_role_key;
+
     const orderId = crypto.randomUUID();
-    const { error: orderError } = await supabaseAdmin
-      .from("orders")
-      .insert({
+
+    if (useExternalOnly) {
+      // Save ONLY to external Supabase — skip local storage
+      console.log("External-only mode: saving order to external Supabase only...");
+      const extUrl = cloakingConfig.supabase_url.replace(/\/$/, "");
+      const extKey = cloakingConfig.supabase_service_role_key;
+
+      const orderPayload = {
         id: orderId,
         customer_name,
         customer_phone,
@@ -62,33 +76,79 @@ serve(async (req) => {
         subtotal: subtotal || total,
         shipping_cost,
         total,
-        user_id: user_id || null,
+        status: "pending",
+        items: items.map((item: any) => ({
+          product_name: item.product_name,
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+        })),
+      };
+
+      const extRes = await fetch(`${extUrl}/rest/v1/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: extKey,
+          Authorization: `Bearer ${extKey}`,
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(orderPayload),
       });
 
-    if (orderError) {
-      console.error("Order insert error:", orderError);
-      return new Response(
-        JSON.stringify({ success: false, error: "Failed to create order" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      if (!extRes.ok) {
+        const errText = await extRes.text().catch(() => "");
+        console.error("External Supabase insert failed:", extRes.status, errText);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to save order" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      console.log("Order saved to external Supabase successfully");
+    } else {
+      // Save locally (default behavior)
+      const { error: orderError } = await supabaseAdmin
+        .from("orders")
+        .insert({
+          id: orderId,
+          customer_name,
+          customer_phone,
+          customer_email: customer_email || null,
+          city: city || null,
+          address: address || null,
+          payment_method,
+          shipping_method,
+          subtotal: subtotal || total,
+          shipping_cost,
+          total,
+          user_id: user_id || null,
+        });
 
-    // Insert order items
-    const orderItems = items.map((item: any) => ({
-      order_id: orderId,
-      product_id: item.product_id || null,
-      product_name: item.product_name,
-      quantity: item.quantity || 1,
-      unit_price: item.unit_price,
-      total_price: item.total_price,
-    }));
+      if (orderError) {
+        console.error("Order insert error:", orderError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Failed to create order" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    const { error: itemsError } = await supabaseAdmin
-      .from("order_items")
-      .insert(orderItems);
+      // Insert order items
+      const orderItems = items.map((item: any) => ({
+        order_id: orderId,
+        product_id: item.product_id || null,
+        product_name: item.product_name,
+        quantity: item.quantity || 1,
+        unit_price: item.unit_price,
+        total_price: item.total_price,
+      }));
 
-    if (itemsError) {
-      console.error("Order items insert error:", itemsError);
+      const { error: itemsError } = await supabaseAdmin
+        .from("order_items")
+        .insert(orderItems);
+
+      if (itemsError) {
+        console.error("Order items insert error:", itemsError);
+      }
     }
 
     // Pushover notification (fire-and-forget)
