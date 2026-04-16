@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    // Try local DB first
     const { data, error } = await supabase
       .from("orders")
       .select("id, gift_sku, gift_name, total")
@@ -34,16 +35,49 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    if (!data) {
+    if (data) {
       return new Response(
-        JSON.stringify({ success: false, error: "Order not found" }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ success: true, order: data }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
+    // Not found locally — check if external DB is configured (cloaking mode)
+    const { data: cloakingSetting } = await supabase
+      .from("store_settings")
+      .select("value")
+      .eq("key", "app_config_cloaking")
+      .maybeSingle();
+
+    const config = cloakingSetting?.value as any;
+    if (config?.sync_orders && config?.supabase_url && config?.supabase_service_role_key) {
+      const extUrl = config.supabase_url.replace(/\/$/, "");
+      const extKey = config.supabase_service_role_key;
+
+      const extRes = await fetch(
+        `${extUrl}/rest/v1/orders?id=eq.${order_id}&select=id,gift_sku,gift_name,total`,
+        {
+          headers: {
+            apikey: extKey,
+            Authorization: `Bearer ${extKey}`,
+          },
+        }
+      );
+
+      if (extRes.ok) {
+        const rows = await extRes.json();
+        if (rows && rows.length > 0) {
+          return new Response(
+            JSON.stringify({ success: true, order: rows[0], source: "external" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ success: true, order: data }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ success: false, error: "Order not found" }),
+      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
     console.error("get-order-status error:", err);
