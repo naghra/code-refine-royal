@@ -284,62 +284,7 @@ serve(async (req) => {
         .eq("id", orderId);
     }
 
-    // Sync order to external Supabase (fire-and-forget)
-    try {
-      const { data: cloakingSetting } = await supabaseAdmin
-        .from("store_settings")
-        .select("value")
-        .eq("key", "app_config_cloaking")
-        .maybeSingle();
-
-      const cloakingConfig = cloakingSetting?.value as any;
-      if (cloakingConfig?.sync_orders && cloakingConfig?.supabase_url && cloakingConfig?.supabase_service_role_key) {
-        console.log("Syncing order to external Supabase...");
-        const extUrl = cloakingConfig.supabase_url.replace(/\/$/, "");
-        const extKey = cloakingConfig.supabase_service_role_key;
-
-        const orderPayload = {
-          id: orderId,
-          customer_name,
-          customer_phone,
-          customer_email: customer_email || null,
-          city: city || null,
-          address: address || null,
-          payment_method,
-          shipping_method,
-          subtotal: subtotal || total,
-          shipping_cost,
-          total,
-          status: "pending",
-          items: items.map((item: any) => ({
-            product_name: item.product_name,
-            quantity: item.quantity || 1,
-            unit_price: item.unit_price,
-            total_price: item.total_price,
-          })),
-        };
-
-        const extRes = await fetch(`${extUrl}/rest/v1/orders`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: extKey,
-            Authorization: `Bearer ${extKey}`,
-            Prefer: "return=minimal",
-          },
-          body: JSON.stringify(orderPayload),
-        });
-
-        if (!extRes.ok) {
-          const errText = await extRes.text().catch(() => "");
-          console.error("External Supabase sync failed:", extRes.status, errText);
-        } else {
-          console.log("Order synced to external Supabase successfully");
-        }
-      }
-    } catch (extErr) {
-      console.error("External Supabase sync error:", extErr);
-    }
+    // External sync already handled above if enabled
 
     // WhatsApp new_order notification (fire-and-forget)
     try {
