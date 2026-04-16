@@ -1,8 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 const API_URL = "https://foubanzluqitdntcnzbi.supabase.co/functions/v1/get-product-description";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvdWJhbnpsdXFpdGRudGNuemJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MjczNDYsImV4cCI6MjA2MDQwMzM0Nn0.DP3VXjpMjYRheqXVnKnBKXtbSAqgMPEgrJ7YDvb3qu0";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+const FETCH_TIMEOUT_MS = 6000;
+const DEFAULT_COUNTRY = "السعودية";
 
 const VALID_COUNTRIES = ["السعودية", "الإمارات", "قطر"];
 
@@ -41,21 +43,33 @@ interface Props {
 }
 
 const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
-  const [showPopup, setShowPopup] = useState(false);
+  const [showCountryBar, setShowCountryBar] = useState(false);
   const [descriptionHtml, setDescriptionHtml] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const [countrySelected, setCountrySelected] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const fetchDescription = useCallback(async (country: string) => {
+    // Check cache first
     const cached = getCached(productHandle, country);
     if (cached) {
       setDescriptionHtml(cached);
+      setLoading(false);
       return;
     }
 
     setLoading(true);
     setError(false);
+
+    // Abort previous request
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    // Timeout
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
     try {
       const res = await fetch(API_URL, {
         method: "POST",
@@ -65,7 +79,10 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
           "Authorization": `Bearer ${ANON_KEY}`,
         },
         body: JSON.stringify({ product_handle: productHandle, country }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       const contentType = res.headers.get("content-type") || "";
       if (!contentType.includes("application/json")) {
@@ -79,94 +96,88 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
       } else {
         throw new Error(data?.error || "No description");
       }
-    } catch (err) {
-      console.error("Error fetching description:", err);
-      setError(true);
-      setDescriptionHtml(null);
+    } catch (err: any) {
+      if (err.name !== "AbortError") {
+        console.error("Error fetching description:", err);
+        setError(true);
+        setDescriptionHtml(null);
+      }
     } finally {
       setLoading(false);
     }
   }, [productHandle]);
 
-  // On mount: check localStorage for saved country
+  // On mount: auto-select country (saved or default) — NO popup blocking
   useEffect(() => {
     const saved = localStorage.getItem("selected_country");
-    if (saved && VALID_COUNTRIES.includes(saved)) {
-      setCountrySelected(true);
-      fetchDescription(saved);
-    } else {
-      localStorage.removeItem("selected_country");
-      setShowPopup(true);
-    }
+    const country = (saved && VALID_COUNTRIES.includes(saved)) ? saved : DEFAULT_COUNTRY;
+    setSelectedCountry(country);
+    localStorage.setItem("selected_country", country);
+    fetchDescription(country);
   }, [fetchDescription]);
 
   const handleCountrySelect = useCallback((countryName: string) => {
     localStorage.setItem("selected_country", countryName);
-    setShowPopup(false);
-    setCountrySelected(true);
+    setSelectedCountry(countryName);
+    setShowCountryBar(false);
     fetchDescription(countryName);
   }, [fetchDescription]);
 
   const handleRetry = useCallback(() => {
-    const saved = localStorage.getItem("selected_country");
-    if (saved) {
-      fetchDescription(saved);
-    } else {
-      setShowPopup(true);
-    }
+    const saved = localStorage.getItem("selected_country") || DEFAULT_COUNTRY;
+    fetchDescription(saved);
   }, [fetchDescription]);
 
   return (
-    <>
-      {/* Country Selection Popup */}
-      {showPopup && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm" dir="rtl">
-          <div className="bg-background rounded-2xl p-8 max-w-sm w-[90%] text-center shadow-2xl animate-in fade-in zoom-in-95 duration-300">
-            <h3 className="text-xl font-bold text-foreground mb-2">اختر دولتك</h3>
-            <p className="text-sm text-muted-foreground mb-6">يرجى اختيار دولتك للمتابعة</p>
-            <div className="space-y-3">
-              {countries.map((c) => (
-                <button
-                  key={c.value}
-                  onClick={() => handleCountrySelect(c.value)}
-                  className="w-full py-3 px-4 text-base font-medium border border-border rounded-xl bg-background hover:border-foreground/40 hover:bg-secondary transition-all"
-                >
-                  {c.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+    <div id="protected-description">
+      {/* Country selector - inline bar, not a blocking popup */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap" dir="rtl">
+        {countries.map((c) => (
+          <button
+            key={c.value}
+            onClick={() => handleCountrySelect(c.value)}
+            className={`px-3 py-1.5 text-xs font-medium border rounded-full transition-all ${
+              selectedCountry === c.value
+                ? "border-foreground bg-foreground text-background"
+                : "border-border bg-background hover:border-foreground/40"
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
 
-      {/* Description Area */}
-      <div id="protected-description">
-        {!countrySelected ? null : loading ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="w-6 h-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
-            <span className="mr-3 text-sm text-muted-foreground">جاري تحميل الوصف...</span>
+      {/* Show default description immediately while loading */}
+      {loading ? (
+        <div>
+          <div className="flex items-center gap-2 mb-2" dir="rtl">
+            <div className="w-4 h-4 border-2 border-border border-t-foreground rounded-full animate-spin" />
+            <span className="text-xs text-muted-foreground">جاري تحميل الوصف...</span>
           </div>
-        ) : error ? (
-          <div className="text-center py-6">
-            <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الوصف الآن، حاول مرة أخرى.</p>
+          {defaultDescription}
+        </div>
+      ) : error ? (
+        <div>
+          {defaultDescription}
+          <div className="text-center py-3">
             <button
               onClick={handleRetry}
-              className="px-4 py-2 text-sm font-medium border border-border rounded-lg hover:bg-secondary transition-colors"
+              className="px-4 py-1.5 text-xs font-medium border border-border rounded-lg hover:bg-secondary transition-colors"
             >
-              إعادة المحاولة
+              إعادة تحميل الوصف
             </button>
           </div>
-        ) : descriptionHtml ? (
-          <div
-            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-            className="prose prose-sm max-w-none"
-            dir="rtl"
-          />
-        ) : (
-          defaultDescription || null
-        )}
-      </div>
-    </>
+        </div>
+      ) : descriptionHtml ? (
+        <div
+          dangerouslySetInnerHTML={{ __html: descriptionHtml }}
+          className="prose prose-sm max-w-none"
+          dir="rtl"
+        />
+      ) : (
+        defaultDescription || null
+      )}
+    </div>
   );
 };
 
