@@ -138,6 +138,8 @@ export type Database = {
           cod_network_data: Json | null
           cod_network_lead_id: string | null
           cod_network_status: string | null
+          confirmed: boolean
+          confirmed_at: string | null
           created_at: string
           customer_email: string | null
           customer_name: string
@@ -166,6 +168,8 @@ export type Database = {
           cod_network_data?: Json | null
           cod_network_lead_id?: string | null
           cod_network_status?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name: string
@@ -194,6 +198,8 @@ export type Database = {
           cod_network_data?: Json | null
           cod_network_lead_id?: string | null
           cod_network_status?: string | null
+          confirmed?: boolean
+          confirmed_at?: string | null
           created_at?: string
           customer_email?: string | null
           customer_name?: string
@@ -382,6 +388,7 @@ export type Database = {
           name_ar: string
           name_en: string | null
           price: number
+          requires_confirmation: boolean
           sku: string | null
           slug: string | null
           snapchat_conversion_value: number | null
@@ -405,6 +412,7 @@ export type Database = {
           name_ar: string
           name_en?: string | null
           price?: number
+          requires_confirmation?: boolean
           sku?: string | null
           slug?: string | null
           snapchat_conversion_value?: number | null
@@ -428,6 +436,7 @@ export type Database = {
           name_ar?: string
           name_en?: string | null
           price?: number
+          requires_confirmation?: boolean
           sku?: string | null
           slug?: string | null
           snapchat_conversion_value?: number | null
