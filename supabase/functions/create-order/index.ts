@@ -32,6 +32,8 @@ serve(async (req) => {
       total,
       user_id,
       items,
+      confirmed,
+      confirmed_at,
     } = await req.json();
 
     if (!customer_name || !customer_phone || !items?.length) {
@@ -64,7 +66,7 @@ serve(async (req) => {
       const extUrl = cloakingConfig.supabase_url.replace(/\/$/, "");
       const extKey = cloakingConfig.supabase_service_role_key;
 
-      const orderPayload = {
+      const orderPayload: any = {
         id: orderId,
         customer_name,
         customer_phone,
@@ -84,6 +86,8 @@ serve(async (req) => {
           total_price: item.total_price,
         })),
       };
+      if (typeof confirmed === "boolean") orderPayload.confirmed = confirmed;
+      if (confirmed_at) orderPayload.confirmed_at = confirmed_at;
 
       const extRes = await fetch(`${extUrl}/rest/v1/orders`, {
         method: "POST",
@@ -107,22 +111,26 @@ serve(async (req) => {
       console.log("Order saved to external Supabase successfully");
     } else {
       // Save locally (default behavior)
+      const localPayload: any = {
+        id: orderId,
+        customer_name,
+        customer_phone,
+        customer_email: customer_email || null,
+        city: city || null,
+        address: address || null,
+        payment_method,
+        shipping_method,
+        subtotal: subtotal || total,
+        shipping_cost,
+        total,
+        user_id: user_id || null,
+      };
+      if (typeof confirmed === "boolean") localPayload.confirmed = confirmed;
+      if (confirmed_at) localPayload.confirmed_at = confirmed_at;
+
       const { error: orderError } = await supabaseAdmin
         .from("orders")
-        .insert({
-          id: orderId,
-          customer_name,
-          customer_phone,
-          customer_email: customer_email || null,
-          city: city || null,
-          address: address || null,
-          payment_method,
-          shipping_method,
-          subtotal: subtotal || total,
-          shipping_cost,
-          total,
-          user_id: user_id || null,
-        });
+        .insert(localPayload);
 
       if (orderError) {
         console.error("Order insert error:", orderError);
