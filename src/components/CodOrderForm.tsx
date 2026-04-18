@@ -49,38 +49,20 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
     setSubmitting(true);
 
     try {
-      // Check if product requires confirmation BEFORE saving
+      // Check product flags upfront
+      let requiresConfirmation = false;
+      let hasGift = false;
       if (productId) {
         const { data: prodCheck } = await supabase
           .from("products")
-          .select("requires_confirmation")
+          .select("requires_confirmation, has_gift")
           .eq("id", productId)
           .maybeSingle();
-        if ((prodCheck as any)?.requires_confirmation) {
-          const pending = {
-            customer_name: fullName.trim(),
-            customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
-            city: city.trim() || null,
-            address: city.trim() || null,
-            payment_method: "cod",
-            shipping_method: "standard",
-            subtotal: totalPrice,
-            shipping_cost: 0,
-            total: totalPrice,
-            product_id: productId,
-            product_name: productName,
-            product_image: productImage || null,
-            quantity,
-            unit_price: unitPrice,
-            created_at: Date.now(),
-          };
-          sessionStorage.setItem("pending_order", JSON.stringify(pending));
-          setSubmitting(false);
-          navigate("/confirm");
-          return;
-        }
+        requiresConfirmation = !!(prodCheck as any)?.requires_confirmation;
+        hasGift = !!(prodCheck as any)?.has_gift;
       }
 
+      // Always save the order — but mark unconfirmed if confirmation is required
       const { data, error } = await supabase.functions.invoke("create-order", {
         body: {
           customer_name: fullName.trim(),
@@ -92,6 +74,8 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
           subtotal: totalPrice,
           shipping_cost: 0,
           total: totalPrice,
+          confirmed: !requiresConfirmation,
+          confirmed_at: requiresConfirmation ? null : new Date().toISOString(),
           items: [{
             product_id: productId || null,
             product_name: productName,
@@ -107,15 +91,24 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
 
       const orderId = data.order_id;
 
-      // Check if product has gift enabled
-      let hasGift = false;
-      if (productId) {
-        const { data: prod } = await supabase
-          .from("products")
-          .select("has_gift")
-          .eq("id", productId)
-          .maybeSingle();
-        if ((prod as any)?.has_gift) hasGift = true;
+      // If confirmation required → go to /confirm with order_id
+      if (requiresConfirmation) {
+        const pending = {
+          order_id: orderId,
+          customer_name: fullName.trim(),
+          customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
+          product_id: productId || null,
+          product_name: productName,
+          product_image: productImage || null,
+          quantity,
+          unit_price: unitPrice,
+          total: totalPrice,
+          has_gift: hasGift,
+          created_at: Date.now(),
+        };
+        sessionStorage.setItem("pending_order", JSON.stringify(pending));
+        navigate("/confirm");
+        return;
       }
 
       if (hasGift && orderId) {

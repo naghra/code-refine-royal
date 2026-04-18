@@ -5,20 +5,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/hooks/useCurrency";
 
 interface PendingOrder {
+  order_id: string;
   customer_name: string;
   customer_phone: string;
-  city: string | null;
-  address: string | null;
-  payment_method: string;
-  shipping_method: string;
-  subtotal: number;
-  shipping_cost: number;
-  total: number;
-  product_id: string;
+  product_id: string | null;
   product_name: string;
   product_image: string | null;
   quantity: number;
   unit_price: number;
+  total: number;
+  has_gift: boolean;
   created_at: number;
 }
 
@@ -80,52 +76,24 @@ const ConfirmOrder = () => {
     setError("");
 
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke("create-order", {
-        body: {
-          customer_name: pending.customer_name,
-          customer_phone: pending.customer_phone,
-          city: pending.city,
-          address: pending.address,
-          payment_method: pending.payment_method,
-          shipping_method: pending.shipping_method,
-          subtotal: pending.subtotal,
-          shipping_cost: pending.shipping_cost,
-          total: pending.total,
-          confirmed: true,
-          confirmed_at: new Date().toISOString(),
-          items: [{
-            product_id: pending.product_id,
-            product_name: pending.product_name,
-            quantity: pending.quantity,
-            unit_price: pending.unit_price,
-            total_price: pending.total,
-          }],
-        },
+      const { data, error: fnErr } = await supabase.functions.invoke("confirm-order", {
+        body: { order_id: pending.order_id },
       });
 
       if (fnErr) throw fnErr;
-      if (!data?.success) throw new Error(data?.error || "Order creation failed");
-
-      const orderId = data.order_id;
-
-      // Check gift
-      const { data: prod } = await supabase
-        .from("products")
-        .select("has_gift")
-        .eq("id", pending.product_id)
-        .maybeSingle();
+      if (!data?.success) throw new Error(data?.error || "Confirmation failed");
 
       sessionStorage.removeItem("pending_order");
 
-      if ((prod as any)?.has_gift && orderId) {
-        navigate(`/gift?order_id=${encodeURIComponent(orderId)}&product_id=${encodeURIComponent(pending.product_id)}`);
+      if (pending.has_gift && pending.order_id) {
+        navigate(`/gift?order_id=${encodeURIComponent(pending.order_id)}&product_id=${encodeURIComponent(pending.product_id || "")}`);
         return;
       }
 
       setSuccess(true);
     } catch (err) {
       console.error("Confirm order failed:", err);
-      setError("حدث خطأ أثناء حفظ الطلب، حاول مرة أخرى");
+      setError("حدث خطأ أثناء تأكيد الطلب، حاول مرة أخرى");
     } finally {
       setSubmitting(false);
     }
@@ -146,7 +114,7 @@ const ConfirmOrder = () => {
           </div>
           <h2 className="text-2xl font-bold">انتهت مدة التأكيد</h2>
           <p className="text-muted-foreground text-sm leading-relaxed">
-            مرت أكثر من 10 دقائق على إدخال بياناتك. يرجى تعبئة النموذج مرة أخرى لإتمام الطلب.
+            مرت أكثر من 10 دقائق على إدخال بياناتك. يمكنك العودة وإعادة المحاولة.
           </p>
           <button
             onClick={() => navigate("/")}
@@ -195,7 +163,7 @@ const ConfirmOrder = () => {
             طلبك بانتظار التأكيد
           </h1>
           <p className="text-primary-foreground/70 text-sm leading-relaxed">
-            لن يتم شحن طلبك حتى تقوم بتأكيده الآن
+            تم استلام طلبك ولن يتم شحنه حتى تقوم بتأكيده الآن
           </p>
         </div>
 
@@ -300,7 +268,7 @@ const ConfirmOrder = () => {
           </button>
 
           <p className="text-[11px] text-center text-muted-foreground leading-relaxed">
-            ⚡ الطلبات تُعالج فقط بعد التأكيد. لن يتم حفظ أي بيانات إذا غادرت هذه الصفحة.
+            ⚡ طلبك محفوظ لكن لن يُشحن حتى يتم التأكيد.
           </p>
         </div>
       </div>
