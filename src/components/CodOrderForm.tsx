@@ -49,20 +49,18 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
     setSubmitting(true);
 
     try {
-      // Check product flags upfront
-      let requiresConfirmation = false;
+      // Check has_gift upfront (best-effort, may be local-only)
       let hasGift = false;
       if (productId) {
         const { data: prodCheck } = await supabase
           .from("products")
-          .select("requires_confirmation, has_gift")
+          .select("has_gift")
           .eq("id", productId)
           .maybeSingle();
-        requiresConfirmation = !!(prodCheck as any)?.requires_confirmation;
         hasGift = !!(prodCheck as any)?.has_gift;
       }
 
-      // Always save the order — but mark unconfirmed if confirmation is required
+      // Always save the order — server will detect requires_confirmation from source of truth
       const { data, error } = await supabase.functions.invoke("create-order", {
         body: {
           customer_name: fullName.trim(),
@@ -74,8 +72,6 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
           subtotal: totalPrice,
           shipping_cost: 0,
           total: totalPrice,
-          confirmed: !requiresConfirmation,
-          confirmed_at: requiresConfirmation ? null : new Date().toISOString(),
           items: [{
             product_id: productId || null,
             product_name: productName,
@@ -90,6 +86,7 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
       if (!data?.success) throw new Error(data?.error || "Order creation failed");
 
       const orderId = data.order_id;
+      const requiresConfirmation = !!data.requires_confirmation;
 
       // If confirmation required → go to /confirm with order_id
       if (requiresConfirmation) {
