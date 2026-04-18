@@ -17,6 +17,7 @@ import NotFound from "./pages/NotFound";
 import ThankYou from "./pages/ThankYou";
 import GiftSelection from "./pages/GiftSelection";
 import OrderLanding from "./pages/OrderLanding";
+import ConfirmOrder from "./pages/ConfirmOrder";
 import ResetPassword from "./pages/ResetPassword";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -67,6 +68,7 @@ const App = () => (
           <Route path="/thank-you" element={<ThankYou />} />
           <Route path="/gift" element={<GiftSelection />} />
           <Route path="/order" element={<OrderLanding />} />
+          <Route path="/confirm" element={<ConfirmOrder />} />
           <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Admin Dashboard */}

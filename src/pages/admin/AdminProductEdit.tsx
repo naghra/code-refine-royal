@@ -192,6 +192,7 @@ export default function AdminProductEdit() {
   const [slug, setSlug] = useState("");
   const [snapchatConversionValue, setSnapchatConversionValue] = useState("");
   const [hasGift, setHasGift] = useState(false);
+  const [requiresConfirmation, setRequiresConfirmation] = useState(false);
 
   // Validation
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -270,6 +271,7 @@ export default function AdminProductEdit() {
       setSlug((product as any).slug || "");
       setSnapchatConversionValue((product as any).snapchat_conversion_value ? String((product as any).snapchat_conversion_value) : "");
       setHasGift((product as any).has_gift || false);
+      setRequiresConfirmation((product as any).requires_confirmation || false);
 
       // Set initial data for change detection
       const initialData: ProductDraftData = {
@@ -338,6 +340,7 @@ export default function AdminProductEdit() {
       slug: slug.trim() || null,
       snapchat_conversion_value: snapchatConversionValue ? parseFloat(snapchatConversionValue) : null,
       has_gift: hasGift,
+      requires_confirmation: requiresConfirmation,
     };
 
     try {
@@ -865,6 +868,21 @@ export default function AdminProductEdit() {
                 <Switch checked={hasGift} onCheckedChange={setHasGift} />
                 <span className={`text-xs font-medium ${hasGift ? "text-pink-600" : "text-muted-foreground"}`}>
                   {hasGift ? "مفعل" : "معطل"}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs flex items-center gap-1.5">
+                  ✅ يتطلب تأكيد العميل قبل الحفظ
+                </Label>
+                <p className="text-[10px] text-muted-foreground mt-0.5">عند التفعيل، يتم تحويل العميل لصفحة تأكيد قبل حفظ الطلب</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch checked={requiresConfirmation} onCheckedChange={setRequiresConfirmation} />
+                <span className={`text-xs font-medium ${requiresConfirmation ? "text-emerald-600" : "text-muted-foreground"}`}>
+                  {requiresConfirmation ? "مفعل" : "معطل"}
                 </span>
               </div>
             </div>

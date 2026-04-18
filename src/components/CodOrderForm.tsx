@@ -49,6 +49,38 @@ const CodOrderForm = ({ productName, productId, unitPrice, compareAtPrice, produ
     setSubmitting(true);
 
     try {
+      // Check if product requires confirmation BEFORE saving
+      if (productId) {
+        const { data: prodCheck } = await supabase
+          .from("products")
+          .select("requires_confirmation")
+          .eq("id", productId)
+          .maybeSingle();
+        if ((prodCheck as any)?.requires_confirmation) {
+          const pending = {
+            customer_name: fullName.trim(),
+            customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
+            city: city.trim() || null,
+            address: city.trim() || null,
+            payment_method: "cod",
+            shipping_method: "standard",
+            subtotal: totalPrice,
+            shipping_cost: 0,
+            total: totalPrice,
+            product_id: productId,
+            product_name: productName,
+            product_image: productImage || null,
+            quantity,
+            unit_price: unitPrice,
+            created_at: Date.now(),
+          };
+          sessionStorage.setItem("pending_order", JSON.stringify(pending));
+          setSubmitting(false);
+          navigate("/confirm");
+          return;
+        }
+      }
+
       const { data, error } = await supabase.functions.invoke("create-order", {
         body: {
           customer_name: fullName.trim(),
