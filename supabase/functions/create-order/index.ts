@@ -60,6 +60,37 @@ serve(async (req) => {
 
     const orderId = crypto.randomUUID();
 
+    // Resolve requires_confirmation from the actual source of truth (external if enabled)
+    let requiresConfirmation = false;
+    const firstProductId = items?.[0]?.product_id;
+    if (firstProductId) {
+      try {
+        if (useExternalOnly) {
+          const extUrl = cloakingConfig.supabase_url.replace(/\/$/, "");
+          const extKey = cloakingConfig.supabase_service_role_key;
+          const r = await fetch(`${extUrl}/rest/v1/products?id=eq.${firstProductId}&select=requires_confirmation`, {
+            headers: { apikey: extKey, Authorization: `Bearer ${extKey}` },
+          });
+          if (r.ok) {
+            const rows = await r.json();
+            requiresConfirmation = !!rows?.[0]?.requires_confirmation;
+          }
+        } else {
+          const { data: p } = await supabaseAdmin
+            .from("products")
+            .select("requires_confirmation")
+            .eq("id", firstProductId)
+            .maybeSingle();
+          requiresConfirmation = !!(p as any)?.requires_confirmation;
+        }
+      } catch (e) {
+        console.error("requires_confirmation lookup failed:", e);
+      }
+    }
+    // Override confirmed flag if product requires confirmation
+    const finalConfirmed = requiresConfirmation ? false : (typeof confirmed === "boolean" ? confirmed : true);
+    const finalConfirmedAt = requiresConfirmation ? null : (confirmed_at || new Date().toISOString());
+
     if (useExternalOnly) {
       // Save ONLY to external Supabase — skip local storage
       console.log("External-only mode: saving order to external Supabase only...");
@@ -86,8 +117,8 @@ serve(async (req) => {
           total_price: item.total_price,
         })),
       };
-      if (typeof confirmed === "boolean") orderPayload.confirmed = confirmed;
-      if (confirmed_at) orderPayload.confirmed_at = confirmed_at;
+      orderPayload.confirmed = finalConfirmed;
+      orderPayload.confirmed_at = finalConfirmedAt;
 
       const extRes = await fetch(`${extUrl}/rest/v1/orders`, {
         method: "POST",
@@ -125,8 +156,8 @@ serve(async (req) => {
         total,
         user_id: user_id || null,
       };
-      if (typeof confirmed === "boolean") localPayload.confirmed = confirmed;
-      if (confirmed_at) localPayload.confirmed_at = confirmed_at;
+      localPayload.confirmed = finalConfirmed;
+      localPayload.confirmed_at = finalConfirmedAt;
 
       const { error: orderError } = await supabaseAdmin
         .from("orders")
@@ -312,7 +343,7 @@ serve(async (req) => {
     console.log(`Order ${orderId} created successfully`);
 
     return new Response(
-      JSON.stringify({ success: true, order_id: orderId }),
+      JSON.stringify({ success: true, order_id: orderId, requires_confirmation: requiresConfirmation }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
