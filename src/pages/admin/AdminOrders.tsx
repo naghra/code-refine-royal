@@ -896,10 +896,14 @@ export default function AdminOrders() {
 
     setSendingToCod(false);
     setSelectedIds(new Set());
-    toast({
-      title: "تم الإرسال",
-      description: `${success} طلب تم إرساله بنجاح${failed > 0 ? ` • ${failed} فشل` : ""}`,
-    });
+    const desc = `${success} طلب تم إرساله بنجاح${failed > 0 ? ` • ${failed} فشل` : ""}`;
+    if (failed > 0 && success === 0) {
+      notify.error("فشل الإرسال", { description: desc });
+    } else if (failed > 0) {
+      notify.warning("تم الإرسال جزئياً", { description: desc });
+    } else {
+      notify.success("تم الإرسال", { description: desc });
+    }
   };
 
   return (
