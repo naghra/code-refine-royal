@@ -15,7 +15,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Edit, Package, Trash2, Eye, Copy, Link2,
   ShoppingCart, AlertTriangle, DollarSign, TrendingUp, ExternalLink,
+  MoreVertical, ShieldCheck, Truck, Clock, Flame,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 import { getProductCurrencySymbol } from "@/lib/format-price";
 import { getFlagUrl } from "@/lib/currency-flags";
 
