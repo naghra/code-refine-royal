@@ -11,7 +11,7 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  CheckCircle2, Search, Phone, MapPin, RefreshCw, ShoppingBag, TrendingUp, Calendar,
+  CheckCircle2, Search, Phone, MapPin, RefreshCw, ShoppingBag, TrendingUp, Calendar, Percent,
 } from "lucide-react";
 
 type ConfirmedOrder = {
@@ -49,16 +49,27 @@ export default function AdminConfirmedOrders() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [responseStats, setResponseStats] = useState({ confirmed: 0, rejected: 0, no_response: 0 });
 
   const fetchOrders = async () => {
     setRefreshing(true);
-    const { data, error } = await supabase
+    const [{ data, error }, confirmedRes, rejectedRes, noRespRes] = await Promise.all([
+      supabase
       .from("orders")
       .select("id, order_number, customer_name, customer_phone, city, total, status, created_at, confirmed_at, confirmation_response")
       .eq("confirmation_response", "confirmed")
       .order("confirmed_at", { ascending: false, nullsFirst: false })
-      .limit(500);
+      .limit(500),
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "confirmed"),
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "rejected"),
+      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "no_response"),
+    ]);
     if (!error && data) setOrders(data as any);
+    setResponseStats({
+      confirmed: confirmedRes.count || 0,
+      rejected: rejectedRes.count || 0,
+      no_response: noRespRes.count || 0,
+    });
     setLoading(false);
     setRefreshing(false);
   };
@@ -87,6 +98,9 @@ export default function AdminConfirmedOrders() {
     }).length;
     return { count: orders.length, total, today };
   }, [orders]);
+
+  const promptedTotal = responseStats.confirmed + responseStats.rejected + responseStats.no_response;
+  const confirmRate = promptedTotal > 0 ? (responseStats.confirmed / promptedTotal) * 100 : 0;
 
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8" dir="rtl">
@@ -121,7 +135,7 @@ export default function AdminConfirmedOrders() {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
           { icon: ShoppingBag, label: "إجمالي المؤكدة", value: stats.count, color: "from-emerald-500 to-teal-600" },
           { icon: TrendingUp, label: "إجمالي المبيعات", value: stats.total, isMoney: true, color: "from-violet-500 to-indigo-600" },
@@ -153,6 +167,49 @@ export default function AdminConfirmedOrders() {
             </div>
           </motion.div>
         ))}
+
+        {/* Confirmation Rate Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-card rounded-2xl p-5 border border-border shadow-sm relative overflow-hidden"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">نسبة التأكيد</p>
+              <p className="text-2xl font-bold text-foreground">
+                {confirmRate.toFixed(1)}<span className="text-base text-muted-foreground">%</span>
+              </p>
+            </div>
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
+              <Percent className="w-5 h-5 text-white" />
+            </div>
+          </div>
+          {/* Progress bar */}
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden mb-2">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${confirmRate}%` }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="h-full bg-gradient-to-l from-emerald-500 to-teal-500"
+            />
+          </div>
+          <p className="text-[11px] text-muted-foreground leading-relaxed">
+            {responseStats.confirmed} مؤكد من {promptedTotal} طلب ظهرت لهم رسالة التأكيد
+          </p>
+          <div className="flex items-center gap-3 mt-2 text-[10px]">
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              ● مؤكد {responseStats.confirmed}
+            </span>
+            <span className="inline-flex items-center gap-1 text-destructive">
+              ● رفض {responseStats.rejected}
+            </span>
+            <span className="inline-flex items-center gap-1 text-muted-foreground">
+              ● بدون رد {responseStats.no_response}
+            </span>
+          </div>
+        </motion.div>
       </div>
 
       {/* Search */}
