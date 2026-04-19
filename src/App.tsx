@@ -20,6 +20,7 @@ import ConfirmOrder from "./pages/ConfirmOrder";
 import ResetPassword from "./pages/ResetPassword";
 import AdminLayout from "./components/admin/AdminLayout";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminConfirmedOrders from "./pages/admin/AdminConfirmedOrders";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminProductEdit from "./pages/admin/AdminProductEdit";
 import AdminSettings from "./pages/admin/AdminSettings";
@@ -74,6 +75,7 @@ const App = () => (
             <Route index element={<Navigate to="/admin/analytics" replace />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="orders" element={<AdminOrders />} />
+            <Route path="confirmed-orders" element={<AdminConfirmedOrders />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="products/:id" element={<AdminProductEdit />} />
             <Route path="cod-form" element={<AdminCodForm />} />
