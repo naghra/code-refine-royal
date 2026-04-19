@@ -18,6 +18,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
       expand
       gap={12}
       offset={20}
+      style={{ ["--width" as any]: "380px" }}
       icons={{
         success: (
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20">
