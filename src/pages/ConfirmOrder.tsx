@@ -31,6 +31,21 @@ const ConfirmOrder = () => {
   const [error, setError] = useState("");
   const [expired, setExpired] = useState(false);
   const [remaining, setRemaining] = useState(TIMEOUT_MS);
+  const recordedRef = useState({ done: false })[0];
+
+  // Helper: record the customer's response to the confirmation prompt.
+  const recordResponse = async (
+    orderId: string,
+    response: "confirmed" | "rejected" | "no_response",
+  ) => {
+    try {
+      await supabase.functions.invoke("confirm-order", {
+        body: { order_id: orderId, response },
+      });
+    } catch (e) {
+      console.error("Failed to record confirmation response:", e);
+    }
+  };
 
   useEffect(() => {
     const raw = sessionStorage.getItem("pending_order");
@@ -62,6 +77,10 @@ const ConfirmOrder = () => {
           sessionStorage.removeItem("pending_order");
           setExpired(true);
           clearInterval(interval);
+          if (!recordedRef.done && pending?.order_id) {
+            recordedRef.done = true;
+            recordResponse(pending.order_id, "no_response");
+          }
           return 0;
         }
         return next;
@@ -70,6 +89,34 @@ const ConfirmOrder = () => {
     return () => clearInterval(interval);
   }, [pending, success]);
 
+  // Record "rejected" as soon as the user clicks "No"
+  useEffect(() => {
+    if (ready === "no" && pending?.order_id && !recordedRef.done) {
+      recordedRef.done = true;
+      recordResponse(pending.order_id, "rejected");
+    }
+  }, [ready, pending]);
+
+  // Record "no_response" if the user leaves the page without acting
+  useEffect(() => {
+    const handler = () => {
+      if (!recordedRef.done && pending?.order_id && ready !== "yes") {
+        recordedRef.done = true;
+        // Use sendBeacon-friendly fetch (fire-and-forget)
+        try {
+          const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/confirm-order`;
+          const blob = new Blob(
+            [JSON.stringify({ order_id: pending.order_id, response: "no_response" })],
+            { type: "application/json" }
+          );
+          navigator.sendBeacon?.(url, blob);
+        } catch {}
+      }
+    };
+    window.addEventListener("pagehide", handler);
+    return () => window.removeEventListener("pagehide", handler);
+  }, [pending, ready]);
+
   const handleConfirm = async () => {
     if (!pending || ready !== "yes" || submitting) return;
     setSubmitting(true);
@@ -77,11 +124,12 @@ const ConfirmOrder = () => {
 
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("confirm-order", {
-        body: { order_id: pending.order_id },
+        body: { order_id: pending.order_id, response: "confirmed" },
       });
 
       if (fnErr) throw fnErr;
       if (!data?.success) throw new Error(data?.error || "Confirmation failed");
+      recordedRef.done = true;
 
       sessionStorage.removeItem("pending_order");
 
