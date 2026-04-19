@@ -885,7 +885,7 @@ export default function AdminOrders() {
           const errorMsg = errorData?.message || errorData?.error || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData || 'فشل غير معروف'));
           const errorStatus = `failed:${errorMsg}`.slice(0, 200);
           await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
-          toast({ title: `فشل إرسال طلب ${order.customer_name}`, description: errorMsg, variant: "destructive" });
+          notify.error(`فشل إرسال طلب ${order.customer_name}`, { description: errorMsg });
           failed++;
         }
       } catch (err: any) {
