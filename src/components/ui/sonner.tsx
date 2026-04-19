@@ -15,10 +15,15 @@ const Toaster = ({ ...props }: ToasterProps) => {
       dir="rtl"
       visibleToasts={4}
       duration={4000}
-      expand
+      expand={false}
       gap={12}
       offset={20}
-      style={{ ["--width" as any]: "380px" }}
+      style={
+        {
+          "--width": "380px",
+          "--toast-width": "380px",
+        } as React.CSSProperties
+      }
       icons={{
         success: (
           <span className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500/10 ring-1 ring-emerald-500/20">
