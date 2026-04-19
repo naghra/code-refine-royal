@@ -1,5 +1,5 @@
 import { toast } from "sonner";
-import { CheckCircle2, AlertCircle, AlertTriangle, Info, ShoppingBag, X } from "lucide-react";
+import { ShoppingBag, X } from "lucide-react";
 
 type NotifyOpts = {
   description?: string;
@@ -12,7 +12,6 @@ export const notify = {
     toast.success(title, {
       description: opts.description,
       duration: opts.duration ?? 4000,
-      icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />,
       action: opts.action,
     }),
 
@@ -20,7 +19,6 @@ export const notify = {
     toast.error(title, {
       description: opts.description,
       duration: opts.duration ?? 5000,
-      icon: <AlertCircle className="w-5 h-5 text-rose-500" />,
       action: opts.action,
     }),
 
@@ -28,7 +26,6 @@ export const notify = {
     toast.warning(title, {
       description: opts.description,
       duration: opts.duration ?? 4500,
-      icon: <AlertTriangle className="w-5 h-5 text-amber-500" />,
       action: opts.action,
     }),
 
@@ -36,7 +33,6 @@ export const notify = {
     toast.info(title, {
       description: opts.description,
       duration: opts.duration ?? 4000,
-      icon: <Info className="w-5 h-5 text-sky-500" />,
       action: opts.action,
     }),
 
