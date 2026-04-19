@@ -43,6 +43,8 @@ const formatRiyadh = (iso: string | null) => {
 
 export default function AdminConfirmedOrders() {
   const { currency } = useCurrency();
+  const cs = currency.symbol;
+  const cc = currency.code;
   const [orders, setOrders] = useState<ConfirmedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -138,7 +140,7 @@ export default function AdminConfirmedOrders() {
                 <p className="text-2xl font-bold text-foreground">
                   {s.isMoney ? (
                     <>
-                      {Number(s.value).toLocaleString()} <CurrencySymbol className="text-base" />
+                      {Number(s.value).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-base" />
                     </>
                   ) : (
                     Number(s.value).toLocaleString()
@@ -220,7 +222,7 @@ export default function AdminConfirmedOrders() {
                       )}
                     </TableCell>
                     <TableCell className="font-bold">
-                      {Number(o.total).toLocaleString()} <CurrencySymbol className="text-xs" />
+                      {Number(o.total).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-xs" />
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
