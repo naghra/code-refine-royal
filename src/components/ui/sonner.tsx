@@ -22,6 +22,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         {
           "--width": "380px",
           "--toast-width": "380px",
+          fontFamily: "inherit",
         } as React.CSSProperties
       }
       icons={{
@@ -55,7 +56,7 @@ const Toaster = ({ ...props }: ToasterProps) => {
         unstyled: false,
         classNames: {
           toast:
-            "group pointer-events-auto relative flex w-full items-center gap-3.5 overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background to-background/95 backdrop-blur-2xl p-4 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25),0_8px_20px_-8px_rgba(0,0,0,0.15)] ring-1 ring-white/5 transition-all hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] data-[type=success]:from-emerald-500/[0.04] data-[type=error]:from-rose-500/[0.04] data-[type=warning]:from-amber-500/[0.04] data-[type=info]:from-sky-500/[0.04]",
+            "group pointer-events-auto relative flex w-full items-center gap-3.5 overflow-hidden rounded-2xl border border-border/40 bg-gradient-to-br from-background to-background/95 backdrop-blur-2xl p-4 shadow-[0_20px_50px_-15px_rgba(0,0,0,0.25),0_8px_20px_-8px_rgba(0,0,0,0.15)] ring-1 ring-white/5 transition-all hover:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] !font-sans data-[type=success]:from-emerald-500/[0.04] data-[type=error]:from-rose-500/[0.04] data-[type=warning]:from-amber-500/[0.04] data-[type=info]:from-sky-500/[0.04]",
           title: "text-[13.5px] font-semibold text-foreground leading-tight tracking-tight",
           description: "text-xs text-muted-foreground mt-1 leading-relaxed",
           icon: "shrink-0",
