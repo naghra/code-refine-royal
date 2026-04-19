@@ -45,16 +45,18 @@ function StatCard({ icon: Icon, label, value, suffix, gradient, delay }: {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay }}
-      className="group relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-4 transition-all hover:shadow-lg hover:-translate-y-0.5"
+      className="group relative rounded-2xl border border-border/50 bg-card/80 backdrop-blur-sm p-5 h-32 transition-all hover:shadow-lg hover:-translate-y-0.5"
     >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0"
+      <div className="flex items-center justify-between gap-3 h-full">
+        <div className="flex flex-col justify-center min-w-0 flex-1">
+          <p className="text-xs text-muted-foreground mb-1.5 truncate">{label}</p>
+          <p className="text-xl font-bold text-foreground leading-tight line-clamp-2 break-words">
+            {typeof value === "number" ? value.toLocaleString("en-US") : value}{suffix}
+          </p>
+        </div>
+        <div className="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
           style={{ background: `linear-gradient(135deg, ${gradient})` }}>
           <Icon className="w-5 h-5 text-white" />
-        </div>
-        <div>
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <p className="text-xl font-bold text-foreground">{typeof value === "number" ? value.toLocaleString("en-US") : value}{suffix}</p>
         </div>
       </div>
     </motion.div>
