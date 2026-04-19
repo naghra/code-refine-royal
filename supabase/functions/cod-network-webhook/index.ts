@@ -133,13 +133,11 @@ serve(async (req) => {
       });
     }
 
-    // *** DEDUP: Skip if status hasn't changed — saves DB writes and costs ***
+    // NOTE: We intentionally do NOT skip duplicate updates.
+    // Every webhook from CodNetwork is applied, even if the status is unchanged,
+    // to ensure no update is ever lost or ignored.
     if (matchedOrder?.cod_network_status === incomingCodStatus) {
-      console.log(`CodNetwork webhook: SKIPPED (status unchanged: ${incomingCodStatus}) for order ${orderId}`);
-      return new Response(JSON.stringify({ success: true, skipped: true }), {
-        status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.log(`CodNetwork webhook: re-applying (status unchanged: ${incomingCodStatus}) for order ${orderId}`);
     }
 
     // Map status
