@@ -16,12 +16,11 @@ const Toaster = ({ ...props }: ToasterProps) => {
       visibleToasts={4}
       duration={4000}
       expand
+      icons={{
+        info: <Info className="w-5 h-5 text-sky-500" />,
+      }}
       toastOptions={{
         unstyled: false,
-        icons: {
-          // Default icon when toast() is called without a type
-          info: <Info className="w-5 h-5 text-sky-500" />,
-        },
         classNames: {
           toast:
             "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-4 pr-5 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.02] border-r-4 border-r-primary/60 data-[type=success]:border-r-emerald-500 data-[type=error]:border-r-rose-500 data-[type=warning]:border-r-amber-500 data-[type=info]:border-r-sky-500",
