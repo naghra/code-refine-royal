@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { notify } from "@/lib/notify";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CurrencySymbol } from "@/components/admin/CurrencySymbol";
 import { Input } from "@/components/ui/input";
