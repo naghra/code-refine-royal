@@ -1,0 +1,2 @@
+ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS confirmation_response text;
+COMMENT ON COLUMN public.orders.confirmation_response IS 'Customer response to confirmation prompt: confirmed | rejected | no_response';

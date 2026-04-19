@@ -138,6 +138,7 @@ export type Database = {
           cod_network_data: Json | null
           cod_network_lead_id: string | null
           cod_network_status: string | null
+          confirmation_response: string | null
           confirmed: boolean
           confirmed_at: string | null
           created_at: string
@@ -168,6 +169,7 @@ export type Database = {
           cod_network_data?: Json | null
           cod_network_lead_id?: string | null
           cod_network_status?: string | null
+          confirmation_response?: string | null
           confirmed?: boolean
           confirmed_at?: string | null
           created_at?: string
@@ -198,6 +200,7 @@ export type Database = {
           cod_network_data?: Json | null
           cod_network_lead_id?: string | null
           cod_network_status?: string | null
+          confirmation_response?: string | null
           confirmed?: boolean
           confirmed_at?: string | null
           created_at?: string
