@@ -110,12 +110,6 @@ serve(async (req) => {
         shipping_cost,
         total,
         status: "pending",
-        items: items.map((item: any) => ({
-          product_name: item.product_name,
-          quantity: item.quantity || 1,
-          unit_price: item.unit_price,
-          total_price: item.total_price,
-        })),
       };
       orderPayload.confirmed = finalConfirmed;
       orderPayload.confirmed_at = finalConfirmedAt;
@@ -140,6 +134,34 @@ serve(async (req) => {
         );
       }
       console.log("Order saved to external Supabase successfully");
+
+      // Insert order items into external order_items table
+      try {
+        const extItems = items.map((item: any) => ({
+          order_id: orderId,
+          product_id: item.product_id || null,
+          product_name: item.product_name,
+          quantity: item.quantity || 1,
+          unit_price: item.unit_price,
+          total_price: item.total_price,
+        }));
+        const itemsRes = await fetch(`${extUrl}/rest/v1/order_items`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: extKey,
+            Authorization: `Bearer ${extKey}`,
+            Prefer: "return=minimal",
+          },
+          body: JSON.stringify(extItems),
+        });
+        if (!itemsRes.ok) {
+          const errText = await itemsRes.text().catch(() => "");
+          console.error("External order_items insert failed:", itemsRes.status, errText);
+        }
+      } catch (itemsErr) {
+        console.error("External order_items error:", itemsErr);
+      }
     } else {
       // Save locally (default behavior)
       const localPayload: any = {
