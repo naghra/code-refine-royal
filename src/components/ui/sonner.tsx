@@ -10,13 +10,29 @@ const Toaster = ({ ...props }: ToasterProps) => {
     <Sonner
       theme={theme as ToasterProps["theme"]}
       className="toaster group"
+      position="top-right"
+      dir="rtl"
+      visibleToasts={4}
+      duration={4000}
+      expand
       toastOptions={{
+        unstyled: false,
         classNames: {
           toast:
-            "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-          description: "group-[.toast]:text-muted-foreground",
-          actionButton: "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
-          cancelButton: "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
+            "group pointer-events-auto relative flex w-full items-start gap-3 overflow-hidden rounded-2xl border border-border/60 bg-background/95 backdrop-blur-xl p-4 pr-5 shadow-[0_8px_30px_-8px_rgba(0,0,0,0.18)] ring-1 ring-black/[0.02] data-[type=success]:border-r-4 data-[type=success]:border-r-emerald-500 data-[type=error]:border-r-4 data-[type=error]:border-r-rose-500 data-[type=warning]:border-r-4 data-[type=warning]:border-r-amber-500 data-[type=info]:border-r-4 data-[type=info]:border-r-sky-500",
+          title: "text-sm font-semibold text-foreground leading-tight",
+          description: "text-xs text-muted-foreground mt-0.5 leading-relaxed",
+          icon: "shrink-0 [&_svg]:w-5 [&_svg]:h-5",
+          actionButton:
+            "!bg-primary !text-primary-foreground !rounded-lg !px-3 !py-1.5 !text-xs !font-medium hover:!opacity-90 transition-opacity",
+          cancelButton:
+            "!bg-muted !text-muted-foreground !rounded-lg !px-3 !py-1.5 !text-xs",
+          closeButton:
+            "!bg-muted/60 hover:!bg-muted !border-0 !text-muted-foreground hover:!text-foreground !rounded-full",
+          success: "[&_[data-icon]]:text-emerald-500",
+          error: "[&_[data-icon]]:text-rose-500",
+          warning: "[&_[data-icon]]:text-amber-500",
+          info: "[&_[data-icon]]:text-sky-500",
         },
       }}
       {...props}
