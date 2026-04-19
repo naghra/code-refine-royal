@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { order_id } = await req.json();
+    const { order_id, response } = await req.json();
     if (!order_id || typeof order_id !== "string") {
       return new Response(
         JSON.stringify({ success: false, error: "order_id is required" }),
@@ -26,11 +26,23 @@ serve(async (req) => {
     );
 
     const confirmedAt = new Date().toISOString();
+    // response: "confirmed" (default) | "rejected" | "no_response"
+    const userResponse = response === "rejected" || response === "no_response" ? response : "confirmed";
+    const updatePayload: Record<string, unknown> = {
+      confirmation_response: userResponse,
+    };
+    if (userResponse === "confirmed") {
+      updatePayload.confirmed = true;
+      updatePayload.confirmed_at = confirmedAt;
+    } else {
+      // Keep confirmed=false; just record the response
+      updatePayload.confirmed = false;
+    }
 
     // Try local first
     const { data: localData, error: localErr } = await supabaseAdmin
       .from("orders")
-      .update({ confirmed: true, confirmed_at: confirmedAt })
+      .update(updatePayload)
       .eq("id", order_id)
       .select("id")
       .maybeSingle();
@@ -64,7 +76,7 @@ serve(async (req) => {
           Authorization: `Bearer ${extKey}`,
           Prefer: "return=minimal",
         },
-        body: JSON.stringify({ confirmed: true, confirmed_at: confirmedAt }),
+        body: JSON.stringify(updatePayload),
       });
       if (res.ok) {
         console.log(`Order ${order_id} confirmed externally`);
