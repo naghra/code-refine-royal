@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ShoppingCart,
   Package,
+  CheckCircle2,
   Settings,
   LogOut,
   Menu,
@@ -33,6 +34,7 @@ import MobileBottomNav from "./MobileBottomNav";
 const navItems = [
   { to: "/admin/analytics", icon: BarChart3, label: "الإحصائيات" },
   { to: "/admin/orders", icon: ShoppingCart, label: "الطلبات" },
+  { to: "/admin/confirmed-orders", icon: CheckCircle2, label: "الطلبات المؤكدة" },
   { to: "/admin/products", icon: Package, label: "المنتجات" },
   { to: "/admin/cod-form", icon: Zap, label: "CodForm", badge: "PRO", customLabel: true },
   { to: "/admin/cod-network", icon: Truck, label: "CodNetwork" },
