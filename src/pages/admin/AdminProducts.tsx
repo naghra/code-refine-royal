@@ -15,11 +15,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus, Search, Edit, Package, Trash2, Eye, Copy, Link2,
   ShoppingCart, AlertTriangle, DollarSign, TrendingUp, ExternalLink,
-  MoreVertical, ShieldCheck, Truck, Clock, Flame,
 } from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
 import { getProductCurrencySymbol } from "@/lib/format-price";
 import { getFlagUrl } from "@/lib/currency-flags";
 
@@ -79,11 +75,6 @@ function ProductCard({ product, index, systemCurrency, onEdit, onDelete, onDupli
   const flagUrl = getFlagUrl(product.currency_enabled ? product.currency_code : systemCurrency.code);
   const thumb = product.images.find(i => i.is_main)?.url || product.images[0]?.url || null;
   const inStock = product.inventory > 0;
-  const lowStock = inStock && product.inventory <= 5;
-  const hasDiscount = product.compare_at_price && product.compare_at_price > product.price;
-  const discountPct = hasDiscount
-    ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
-    : 0;
 
   return (
     <motion.div
@@ -92,173 +83,92 @@ function ProductCard({ product, index, systemCurrency, onEdit, onDelete, onDupli
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.35, delay: Math.min(index * 0.05, 0.3) }}
       layout
-      className="group relative flex flex-col rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm transition-all duration-200 hover:shadow-xl hover:-translate-y-1 hover:border-border"
+      className="group rounded-2xl border border-border/50 bg-card/90 backdrop-blur-sm overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
     >
       {/* Image */}
-      <div
-        className="relative aspect-[4/3] bg-muted overflow-hidden cursor-pointer"
-        onClick={() => onEdit(product.id)}
-      >
+      <div className="relative aspect-square bg-muted overflow-hidden">
         {thumb ? (
-          <img
-            src={thumb}
-            alt={product.name_ar}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-          />
+          <img src={thumb} alt={product.name_ar} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <Package className="w-12 h-12 text-muted-foreground/30" />
           </div>
         )}
 
-        {/* Bottom fade gradient */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/40 to-transparent" />
-
-        {/* Top-left: flag + discount */}
-        <div className="absolute top-3 left-3 flex items-center gap-1.5">
+        {/* Status badge */}
+        <div className="absolute top-3 right-3 flex items-center gap-1.5">
           {flagUrl && (
-            <div className="w-7 h-5 rounded-[3px] overflow-hidden shadow-sm border border-white/40">
+            <div className="w-7 h-5 rounded-[3px] overflow-hidden shadow-sm border border-border/30">
               <img src={flagUrl} alt="" className="w-full h-full object-cover" loading="lazy" />
             </div>
           )}
-          {hasDiscount && (
-            <Badge className="bg-rose-500 hover:bg-rose-500 text-white border-0 text-[10px] font-bold px-2 py-0.5">
-              -{discountPct}%
-            </Badge>
-          )}
-        </div>
-
-        {/* Top-right: status + menu */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5">
-          <Badge className={`text-[10px] font-semibold border backdrop-blur-sm ${
+          <Badge className={`text-[10px] font-semibold border ${
             product.status === "active"
-              ? "bg-emerald-500/90 text-white border-emerald-400/50 hover:bg-emerald-500/90"
-              : "bg-gray-500/80 text-white border-gray-400/50 hover:bg-gray-500/80"
+              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+              : "bg-gray-50 text-gray-600 border-gray-200"
           }`}>
             {product.status === "active" ? "نشط" : "مسودة"}
           </Badge>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-              <Button
-                size="icon"
-                className="h-7 w-7 rounded-lg bg-white/90 text-foreground hover:bg-white shadow-sm border-0"
-              >
-                <MoreVertical className="w-3.5 h-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem onClick={() => onEdit(product.id)}>
-                <Edit className="w-4 h-4 ml-2" /> تعديل
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onView(product.id)}>
-                <ExternalLink className="w-4 h-4 ml-2" /> عرض المنتج
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onCopyLink(product.id, product.name_ar)}>
-                <Link2 className="w-4 h-4 ml-2" /> نسخ الرابط
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate(product)}>
-                <Copy className="w-4 h-4 ml-2" /> تكرار
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className="text-rose-600 focus:text-rose-600"
-                onClick={() => onDelete(product.id)}
-              >
-                <Trash2 className="w-4 h-4 ml-2" /> حذف
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
 
-        {/* Low stock badge (bottom-left) */}
-        {lowStock && (
-          <div className="absolute bottom-3 left-3">
-            <Badge className="bg-amber-500 hover:bg-amber-500 text-white border-0 text-[10px] font-semibold gap-1">
-              <Flame className="w-3 h-3" /> كمية محدودة ({product.inventory})
+        {/* Stock warning */}
+        {!inStock && (
+          <div className="absolute top-3 left-3">
+            <Badge className="bg-red-50 text-red-600 border-red-200 text-[10px] font-semibold border gap-1">
+              <AlertTriangle className="w-3 h-3" /> نفذ
             </Badge>
           </div>
         )}
 
-        {/* Out of stock overlay */}
-        {!inStock && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/55 backdrop-blur-[1px]">
-            <Badge className="bg-rose-600 hover:bg-rose-600 text-white border-0 text-xs font-bold px-3 py-1 gap-1">
-              <AlertTriangle className="w-3.5 h-3.5" /> نفذ المخزون
-            </Badge>
-          </div>
-        )}
+        {/* Hover actions overlay */}
+        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all duration-300 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 flex-wrap px-4">
+          <Button size="icon" className="h-9 w-9 rounded-xl bg-white/90 text-foreground hover:bg-white shadow-lg"
+            title="تعديل"
+            onClick={(e) => { e.stopPropagation(); onEdit(product.id); }}>
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button size="icon" className="h-9 w-9 rounded-xl bg-white/90 text-foreground hover:bg-white shadow-lg"
+            title="عرض المنتج"
+            onClick={(e) => { e.stopPropagation(); onView(product.id); }}>
+            <ExternalLink className="w-4 h-4" />
+          </Button>
+          <Button size="icon" className="h-9 w-9 rounded-xl bg-white/90 text-foreground hover:bg-white shadow-lg"
+            title="نسخ الرابط"
+            onClick={(e) => { e.stopPropagation(); onCopyLink(product.id, product.name_ar); }}>
+            <Link2 className="w-4 h-4" />
+          </Button>
+          <Button size="icon" className="h-9 w-9 rounded-xl bg-white/90 text-foreground hover:bg-white shadow-lg"
+            title="نسخ المنتج"
+            onClick={(e) => { e.stopPropagation(); onDuplicate(product); }}>
+            <Copy className="w-4 h-4" />
+          </Button>
+          <Button size="icon" className="h-9 w-9 rounded-xl bg-red-500/90 text-white hover:bg-red-600 shadow-lg"
+            title="حذف"
+            onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}>
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Info */}
-      <div
-        className="flex flex-col flex-1 p-4 cursor-pointer"
-        onClick={() => onEdit(product.id)}
-      >
-        {/* Title */}
-        <h3 className="text-[15px] font-bold text-foreground leading-snug line-clamp-2 min-h-[2.5rem]">
-          {product.name_ar}
-        </h3>
+      <div className="p-4 space-y-2 cursor-pointer" onClick={() => onEdit(product.id)}>
+        <h3 className="text-sm font-semibold text-foreground truncate">{product.name_ar}</h3>
 
-        {/* Short description */}
         {product.description_ar && (
-          <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-            {product.description_ar.replace(/<[^>]*>/g, "")}
-          </p>
+          <p className="text-xs text-muted-foreground line-clamp-2">{product.description_ar.replace(/<[^>]*>/g, "")}</p>
         )}
 
-        {/* Trust mini-row */}
-        <div className="mt-3 flex items-center gap-3 text-[10px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" /> أصلي
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Truck className="w-3.5 h-3.5 text-sky-600" /> توصيل سريع
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <Clock className="w-3.5 h-3.5 text-violet-600" /> دعم 24/7
-          </span>
-        </div>
-
-        {/* Pricing */}
-        <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-lg font-extrabold text-foreground">
-            {product.price.toLocaleString("en-US")} <span className="text-sm font-bold">{cs}</span>
-          </span>
-          {hasDiscount && (
-            <span className="text-xs text-muted-foreground line-through">
-              {product.compare_at_price!.toLocaleString("en-US")} {cs}
-            </span>
-          )}
-        </div>
-
-        {/* Stock indicator */}
-        <div className="mt-2 flex items-center gap-1.5">
-          <span className={`w-1.5 h-1.5 rounded-full ${
-            !inStock ? "bg-rose-500" : lowStock ? "bg-amber-500" : "bg-emerald-500"
-          }`} />
-          <span className="text-[10px] text-muted-foreground">
-            {!inStock ? "نفذ المخزون" : `${product.inventory} قطعة متوفرة`}
-          </span>
-        </div>
-
-        {/* CTA */}
-        <div className="mt-4 pt-3 border-t border-border/50 flex gap-2">
-          <Button
-            className="flex-1 h-9 rounded-xl bg-foreground text-background hover:bg-foreground/90 font-semibold text-xs transition-all"
-            onClick={(e) => { e.stopPropagation(); onEdit(product.id); }}
-          >
-            <Edit className="w-3.5 h-3.5 ml-1.5" /> تعديل المنتج
-          </Button>
-          <Button
-            size="icon"
-            variant="outline"
-            className="h-9 w-9 rounded-xl shrink-0"
-            title="عرض"
-            onClick={(e) => { e.stopPropagation(); onView(product.id); }}
-          >
-            <Eye className="w-4 h-4" />
-          </Button>
+        <div className="flex items-center justify-between pt-1">
+          <div className="flex items-baseline gap-2">
+            <span className="text-base font-bold text-foreground">{product.price.toLocaleString("en-US")} {cs}</span>
+            {product.compare_at_price && product.compare_at_price > product.price && (
+              <span className="text-xs text-muted-foreground line-through">{product.compare_at_price.toLocaleString("en-US")} {cs}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className={`w-2 h-2 rounded-full ${inStock ? "bg-emerald-400" : "bg-red-400"}`} />
+            <span className="text-[10px] text-muted-foreground">{inStock ? `${product.inventory} متوفر` : "نفذ المخزون"}</span>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -268,20 +178,14 @@ function ProductCard({ product, index, systemCurrency, onEdit, onDelete, onDupli
 // --- Loading Skeleton ---
 function ProductsSkeleton() {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-      {[...Array(6)].map((_, i) => (
-        <div key={i} className="rounded-2xl border border-border/60 bg-card overflow-hidden shadow-sm">
-          <Skeleton className="aspect-[4/3]" />
-          <div className="p-4 space-y-3">
-            <Skeleton className="h-4 w-4/5" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {[...Array(8)].map((_, i) => (
+        <div key={i} className="rounded-2xl border border-border/50 overflow-hidden">
+          <Skeleton className="aspect-square" />
+          <div className="p-4 space-y-2">
+            <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-3 w-full" />
-            <div className="flex gap-2">
-              <Skeleton className="h-3 w-12" />
-              <Skeleton className="h-3 w-16" />
-              <Skeleton className="h-3 w-14" />
-            </div>
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-9 w-full rounded-xl" />
+            <Skeleton className="h-5 w-1/2" />
           </div>
         </div>
       ))}
@@ -496,7 +400,7 @@ export default function AdminProducts() {
           <p className="text-muted-foreground">لا توجد نتائج مطابقة</p>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           <AnimatePresence>
             {filtered.map((product, i) => (
               <ProductCard
