@@ -213,6 +213,184 @@ export default function AdminConfirmedOrders() {
   const promptedTotal = responseStats.confirmed + responseStats.rejected + responseStats.no_response;
   const confirmRate = promptedTotal > 0 ? (responseStats.confirmed / promptedTotal) * 100 : 0;
 
+  const toggleSelect = (id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id); else next.delete(id);
+      return next;
+    });
+  };
+  const toggleSelectAll = (checked: boolean) => {
+    setSelectedIds(checked ? new Set(filtered.map((o) => o.id)) : new Set());
+  };
+
+  const openDetails = async (o: ConfirmedOrder) => {
+    setDetailsOrder(o);
+    setDetailsItems([]);
+    setLoadingDetails(true);
+    const { data } = await supabase
+      .from("order_items")
+      .select("id, product_id, product_name, quantity, unit_price, total_price")
+      .eq("order_id", o.id);
+    setDetailsItems((data as OrderItem[]) || []);
+    setLoadingDetails(false);
+  };
+
+  const exportCSV = (list: ConfirmedOrder[]) => {
+    if (list.length === 0) {
+      notify.warning("لا توجد طلبات للتصدير");
+      return;
+    }
+    const headers = [
+      "رقم الطلب", "العميل", "الجوال", "المدينة", "العنوان", "المجموع",
+      "وقت التأكيد", "نقاط الجودة", "تصنيف الليد", "الهدية", "SKU الهدية",
+      "حالة CodNetwork", "Lead ID",
+    ];
+    const rows = list.map((o) => [
+      o.order_number,
+      o.customer_name,
+      o.customer_phone,
+      o.city || "",
+      (o.address || "").replace(/[\r\n,]/g, " "),
+      o.total,
+      o.confirmed_at ? new Date(o.confirmed_at).toISOString() : "",
+      o.lead_score ?? "",
+      o.lead_quality || "",
+      o.gift_name || "",
+      o.gift_sku || "",
+      o.cod_network_status || "",
+      o.cod_network_lead_id || "",
+    ]);
+    const escape = (v: any) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const csv = "\uFEFF" + [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `confirmed_orders_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const sendSelectedToCodNetwork = async () => {
+    if (!codSettings) {
+      notify.error("CodNetwork غير مفعل", { description: "يرجى تفعيله من الإعدادات أولاً" });
+      return;
+    }
+    const selected = orders.filter((o) => selectedIds.has(o.id));
+    if (selected.length === 0) return;
+    setSending(true);
+    let success = 0;
+    let failed = 0;
+    const updates: { id: string; status: string; lead_id?: string }[] = [];
+
+    for (const order of selected) {
+      try {
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("product_name, quantity, unit_price, total_price, product_id")
+          .eq("order_id", order.id);
+
+        const productIds = (items || []).map((i: any) => i.product_id).filter(Boolean);
+        let skuMap: Record<string, string> = {};
+        let productCurrencyCode: string | null = null;
+        if (productIds.length > 0) {
+          const { data: products } = await supabase
+            .from("products")
+            .select("id, sku, currency_enabled, currency_code")
+            .in("id", productIds);
+          if (products) {
+            skuMap = Object.fromEntries(products.map((p: any) => [p.id, p.sku || ""]));
+            const withCurrency = products.find((p: any) => p.currency_enabled && p.currency_code);
+            if (withCurrency) productCurrencyCode = withCurrency.currency_code;
+          }
+        }
+
+        const effectiveCurrency = productCurrencyCode || cc;
+        const codCountry = CURRENCY_COUNTRY_MAP[effectiveCurrency] || codSettings.default_country || "KSA";
+        const codCity = order.city?.trim() || codSettings.default_city || "N/A";
+        const codAddress = order.address?.trim() || order.city?.trim() || "N/A";
+
+        const leadItems = (items || [])
+          .map((item: any) => ({
+            sku: (item.product_id && skuMap[item.product_id]) || item.product_name,
+            price: Number(item.total_price),
+            quantity: Number(item.quantity),
+          }))
+          .filter((item: any) => item.price > 0);
+
+        if (leadItems.length === 0) {
+          leadItems.push({ sku: "UNKNOWN", price: Number(order.total), quantity: 1 });
+        }
+        if (order.gift_sku) {
+          leadItems.push({ sku: order.gift_sku, price: 0, quantity: 1 });
+        }
+
+        const res = await supabase.functions.invoke("cod-network-proxy", {
+          body: {
+            action: "send_order",
+            api_token: codSettings.api_token,
+            order_data: {
+              full_name: order.customer_name,
+              phone: order.customer_phone,
+              country: codCountry,
+              address: codAddress,
+              city: codCity,
+              area: codCity,
+              currency: effectiveCurrency,
+              items: leadItems,
+            },
+          },
+        });
+
+        if (res.data?.success) {
+          const leadId = res.data?.data?.data?.id || res.data?.data?.id;
+          const updateData: any = { cod_network_status: "sent" };
+          if (leadId) updateData.cod_network_lead_id = String(leadId);
+          await supabase.from("orders").update(updateData).eq("id", order.id);
+          updates.push({ id: order.id, status: "sent", lead_id: leadId ? String(leadId) : undefined });
+          success++;
+        } else {
+          const errorData = res.data?.data;
+          const errorMsg = errorData?.message || errorData?.error || (typeof errorData === "string" ? errorData : JSON.stringify(errorData || "فشل غير معروف"));
+          const errorStatus = `failed:${errorMsg}`.slice(0, 200);
+          await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
+          updates.push({ id: order.id, status: errorStatus });
+          failed++;
+        }
+      } catch (err: any) {
+        const errMsg = err?.message || String(err);
+        const errorStatus = `failed:${errMsg}`.slice(0, 200);
+        await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
+        updates.push({ id: order.id, status: errorStatus });
+        failed++;
+      }
+    }
+
+    // Update local state
+    setOrders((prev) =>
+      prev.map((o) => {
+        const u = updates.find((x) => x.id === o.id);
+        if (!u) return o;
+        return {
+          ...o,
+          cod_network_status: u.status,
+          cod_network_lead_id: u.lead_id ?? o.cod_network_lead_id,
+        };
+      }),
+    );
+    setSending(false);
+    setSelectedIds(new Set());
+
+    const desc = `${success} طلب تم إرساله${failed > 0 ? ` • ${failed} فشل` : ""}`;
+    if (failed > 0 && success === 0) notify.error("فشل الإرسال", { description: desc });
+    else if (failed > 0) notify.warning("تم الإرسال جزئياً", { description: desc });
+    else notify.success("تم الإرسال إلى CodNetwork", { description: desc });
+  };
+
   return (
     <div className="min-h-screen p-4 sm:p-6 lg:p-8" dir="rtl">
       {/* Header */}
