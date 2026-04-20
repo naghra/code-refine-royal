@@ -79,6 +79,19 @@ const ConfirmOrder = () => {
   const [softExitId, setSoftExitId] = useState<QId | null>(null);
   const [showReadyModal, setShowReadyModal] = useState(true);
   const [showNoWarning, setShowNoWarning] = useState(false);
+  const [idleShake, setIdleShake] = useState(false);
+
+  // Trigger micro-shake on the answer buttons after 5s of inactivity per question
+  useEffect(() => {
+    if (softExitId || step >= QUESTIONS.length) return;
+    setIdleShake(false);
+    const t = setTimeout(() => setIdleShake(true), 5000);
+    const reset = setTimeout(() => setIdleShake(false), 5800);
+    return () => {
+      clearTimeout(t);
+      clearTimeout(reset);
+    };
+  }, [step, softExitId]);
 
   // Lock body scroll while the ready-to-receive modal is open so the
   // backdrop doesn't shift/repaint when the user tries to scroll on mobile.
