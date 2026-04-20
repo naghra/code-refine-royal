@@ -199,7 +199,10 @@ const ConfirmOrder = () => {
       // If not qualified, mark warm lead immediately (do NOT send to call center)
       if (s < QUALIFY_THRESHOLD && pending?.order_id && !recordedRef.current.done) {
         recordedRef.current.done = true;
-        recordResponse(pending.order_id, "rejected");
+        recordResponse(pending.order_id, "rejected", {
+          lead_score: s,
+          lead_quality: "warm_lead",
+        });
       }
     }, 1400);
   };
@@ -213,7 +216,10 @@ const ConfirmOrder = () => {
         setSoftExitId("ready");
         if (pending?.order_id && !recordedRef.current.done) {
           recordedRef.current.done = true;
-          recordResponse(pending.order_id, "rejected");
+          recordResponse(pending.order_id, "rejected", {
+            lead_score: 0,
+            lead_quality: "warm_lead",
+          });
         }
         return;
       }
@@ -232,7 +238,12 @@ const ConfirmOrder = () => {
     setError("");
     try {
       const { data, error: fnErr } = await supabase.functions.invoke("confirm-order", {
-        body: { order_id: pending.order_id, response: "confirmed" },
+        body: {
+          order_id: pending.order_id,
+          response: "confirmed",
+          lead_score: score,
+          lead_quality: "high_intent",
+        },
       });
       if (fnErr) throw fnErr;
       if (!data?.success) throw new Error(data?.error || "Confirmation failed");
