@@ -657,18 +657,38 @@ export default function AdminConfirmedOrders() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10 text-right">
+                    <Checkbox
+                      checked={filtered.length > 0 && filtered.every((o) => selectedIds.has(o.id))}
+                      onCheckedChange={(c) => toggleSelectAll(!!c)}
+                      aria-label="تحديد الكل"
+                    />
+                  </TableHead>
                   <TableHead className="text-right">#</TableHead>
                   <TableHead className="text-right">العميل</TableHead>
                   <TableHead className="text-right">الجوال</TableHead>
                   <TableHead className="text-right">المدينة</TableHead>
                   <TableHead className="text-right">الإجمالي</TableHead>
-                  <TableHead className="text-right">الحالة</TableHead>
+                  <TableHead className="text-right">جودة الليد</TableHead>
+                  <TableHead className="text-right">الهدية</TableHead>
+                  <TableHead className="text-right">CodNetwork</TableHead>
                   <TableHead className="text-right">وقت التأكيد</TableHead>
+                  <TableHead className="text-right w-16">إجراء</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filtered.map((o) => (
-                  <TableRow key={o.id} className="hover:bg-muted/40">
+                  <TableRow
+                    key={o.id}
+                    className={`hover:bg-muted/40 ${selectedIds.has(o.id) ? "bg-primary/5" : ""}`}
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox
+                        checked={selectedIds.has(o.id)}
+                        onCheckedChange={(c) => toggleSelect(o.id, !!c)}
+                        aria-label={`تحديد طلب ${o.order_number}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-mono text-xs">#{o.order_number}</TableCell>
                     <TableCell className="font-semibold">{o.customer_name}</TableCell>
                     <TableCell>
@@ -695,13 +715,66 @@ export default function AdminConfirmedOrders() {
                       {Number(o.total).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-xs" />
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                        <CheckCircle2 className="w-3 h-3 mr-1" />
-                        مؤكد
-                      </Badge>
+                      {o.lead_quality === "high_intent" ? (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                          <Flame className="w-3 h-3" />
+                          High Intent
+                          {o.lead_score != null && <span className="font-mono">· {o.lead_score}</span>}
+                        </Badge>
+                      ) : o.lead_quality === "warm_lead" ? (
+                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 gap-1">
+                          <Sparkles className="w-3 h-3" />
+                          Warm
+                          {o.lead_score != null && <span className="font-mono">· {o.lead_score}</span>}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {o.gift_sku ? (
+                        <Badge variant="outline" className="bg-violet-50 text-violet-700 border-violet-200 gap-1">
+                          <Gift className="w-3 h-3" />
+                          {o.gift_name || o.gift_sku}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {o.cod_network_status === "sent" || o.cod_network_status === "delivered" ? (
+                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                          {o.cod_network_status === "delivered" ? "مُسلَّم" : "تم الإرسال"}
+                        </Badge>
+                      ) : o.cod_network_status?.startsWith("failed") ? (
+                        <Badge
+                          variant="outline"
+                          className="bg-rose-50 text-rose-700 border-rose-200 max-w-[180px] truncate"
+                          title={o.cod_network_status}
+                        >
+                          فشل
+                        </Badge>
+                      ) : o.cod_network_status ? (
+                        <Badge variant="outline" className="bg-sky-50 text-sky-700 border-sky-200">
+                          {o.cod_network_status}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">لم يُرسَل</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {formatRiyadh(o.confirmed_at || o.created_at)}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => openDetails(o)}
+                        aria-label="عرض التفاصيل"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -710,6 +783,161 @@ export default function AdminConfirmedOrders() {
           </div>
         )}
       </div>
+
+      {/* Details Sheet */}
+      <Sheet open={!!detailsOrder} onOpenChange={(open) => !open && setDetailsOrder(null)}>
+        <SheetContent side="left" className="w-full sm:max-w-lg overflow-y-auto" dir="rtl">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Hash className="w-4 h-4 text-muted-foreground" />
+              طلب رقم {detailsOrder?.order_number}
+            </SheetTitle>
+          </SheetHeader>
+
+          {detailsOrder && (
+            <div className="mt-5 space-y-5">
+              {/* Customer */}
+              <section className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase">بيانات العميل</h4>
+                <div className="text-sm font-bold text-foreground">{detailsOrder.customer_name}</div>
+                <a
+                  href={`tel:${detailsOrder.customer_phone}`}
+                  className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
+                  dir="ltr"
+                >
+                  <Phone className="w-3.5 h-3.5" />
+                  {detailsOrder.customer_phone}
+                </a>
+                {detailsOrder.city && (
+                  <div className="flex items-center gap-2 text-sm text-foreground">
+                    <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                    {detailsOrder.city}
+                  </div>
+                )}
+                {detailsOrder.address && (
+                  <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                    <Home className="w-3.5 h-3.5 mt-0.5" />
+                    <span>{detailsOrder.address}</span>
+                  </div>
+                )}
+              </section>
+
+              {/* Lead quality */}
+              {(detailsOrder.lead_quality || detailsOrder.lead_score != null) && (
+                <section className="rounded-xl border border-border p-4 space-y-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase">جودة الليد</h4>
+                  <div className="flex items-center gap-2">
+                    {detailsOrder.lead_quality === "high_intent" ? (
+                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 gap-1">
+                        <Flame className="w-3 h-3" /> High Intent
+                      </Badge>
+                    ) : detailsOrder.lead_quality === "warm_lead" ? (
+                      <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 gap-1">
+                        <Sparkles className="w-3 h-3" /> Warm Lead
+                      </Badge>
+                    ) : null}
+                    {detailsOrder.lead_score != null && (
+                      <span className="text-sm font-mono text-foreground">
+                        {detailsOrder.lead_score} / 100
+                      </span>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {/* Items */}
+              <section className="rounded-xl border border-border p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
+                  <Package className="w-3.5 h-3.5" /> المنتجات
+                </h4>
+                {loadingDetails ? (
+                  <Skeleton className="h-12 w-full" />
+                ) : detailsItems.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">لا توجد عناصر</p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {detailsItems.map((it) => (
+                      <li key={it.id} className="py-2 flex items-center justify-between gap-3">
+                        <div className="text-sm text-foreground flex-1">
+                          {it.product_name}
+                          <span className="text-muted-foreground"> × {it.quantity}</span>
+                        </div>
+                        <div className="text-sm font-bold whitespace-nowrap">
+                          {Number(it.total_price).toLocaleString()}{" "}
+                          <CurrencySymbol code={cc} symbol={cs} className="text-xs" />
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {detailsOrder.gift_sku && (
+                  <div className="mt-2 flex items-center gap-2 rounded-lg bg-violet-50 border border-violet-200 px-3 py-2">
+                    <Gift className="w-4 h-4 text-violet-600" />
+                    <div className="text-sm text-violet-800">
+                      <span className="font-semibold">{detailsOrder.gift_name || "هدية"}</span>
+                      <span className="text-xs text-violet-600 mx-1">({detailsOrder.gift_sku})</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-border space-y-1 text-sm">
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>المجموع الفرعي</span>
+                    <span>{Number(detailsOrder.subtotal).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-xs" /></span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>الشحن</span>
+                    <span>{Number(detailsOrder.shipping_cost).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-xs" /></span>
+                  </div>
+                  <div className="flex justify-between text-base font-bold text-foreground pt-1">
+                    <span>الإجمالي</span>
+                    <span>{Number(detailsOrder.total).toLocaleString()} <CurrencySymbol code={cc} symbol={cs} className="text-sm" /></span>
+                  </div>
+                </div>
+              </section>
+
+              {/* CodNetwork */}
+              <section className="rounded-xl border border-border p-4 space-y-2">
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase">CodNetwork</h4>
+                {detailsOrder.cod_network_lead_id && (
+                  <div className="text-xs text-muted-foreground">
+                    Lead ID:{" "}
+                    <span className="font-mono text-foreground" dir="ltr">
+                      {detailsOrder.cod_network_lead_id}
+                    </span>
+                  </div>
+                )}
+                <div className="text-sm text-foreground break-words">
+                  {detailsOrder.cod_network_status || "لم يتم الإرسال بعد"}
+                </div>
+                <div className="pt-2 flex gap-2">
+                  <Button
+                    size="sm"
+                    className="gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 text-white hover:opacity-90"
+                    disabled={sending || !codSettings}
+                    onClick={async () => {
+                      setSelectedIds(new Set([detailsOrder.id]));
+                      await sendSelectedToCodNetwork();
+                      setDetailsOrder(null);
+                    }}
+                  >
+                    {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                    {detailsOrder.cod_network_status === "sent" ? "إعادة الإرسال" : "إرسال إلى CodNetwork"}
+                  </Button>
+                </div>
+              </section>
+
+              {detailsOrder.notes && (
+                <section className="rounded-xl border border-border p-4">
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase mb-2">ملاحظات</h4>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{detailsOrder.notes}</p>
+                </section>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
