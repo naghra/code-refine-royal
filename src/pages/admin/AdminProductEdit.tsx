@@ -385,6 +385,12 @@ export default function AdminProductEdit() {
 
       toast({ title: isNew ? "✅ تم إنشاء المنتج بنجاح" : "✅ تم حفظ التغييرات" });
       clearDraft();
+      // Fire-and-forget sync to external DB (cloaking mode)
+      if (productId) {
+        supabase.functions
+          .invoke("sync-product-to-external", { body: { product_id: productId } })
+          .catch((e) => console.warn("External product sync failed:", e));
+      }
       if (isNew) navigate(`/admin/products/${productId}`);
     } catch (err: any) {
       toast({ title: "خطأ", description: err.message, variant: "destructive" });
