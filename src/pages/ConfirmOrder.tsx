@@ -259,7 +259,13 @@ const ConfirmOrder = () => {
       setSuccess(true);
     } catch (err) {
       console.error("Confirm order failed:", err);
-      setError("حدث خطأ بسيط، حاول مرة أخرى من فضلك");
+      const msg = err instanceof Error ? err.message : String(err);
+      if (msg.toLowerCase().includes("not found")) {
+        sessionStorage.removeItem("pending_order");
+        setError("انتهت صلاحية هذا الطلب. الرجاء إعادة الطلب من صفحة المنتج.");
+      } else {
+        setError("حدث خطأ بسيط، حاول مرة أخرى من فضلك");
+      }
     } finally {
       setSubmitting(false);
     }
