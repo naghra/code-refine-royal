@@ -339,8 +339,15 @@ const ConfirmOrder = () => {
 
   if (!pending) return null;
 
-  // Progress indicator: percent across the funnel
-  const progress = step >= 3 ? 100 : ((step + 1) / (QUESTIONS.length + 1)) * 100;
+  // Progress indicator: percent across the funnel (questions + evaluation + result)
+  const totalSteps = QUESTIONS.length + 1; // +1 for result
+  const progress = softExitId
+    ? 100
+    : step >= 4
+    ? 100
+    : step === 3
+    ? 90
+    : ((step + 1) / totalSteps) * 100;
 
   return (
     <div
@@ -468,7 +475,17 @@ const ConfirmOrder = () => {
         {/* ===== Progress Bar ===== */}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-[11px] text-white/50">
-            <span>{step >= 3 ? "اكتمل التأهيل" : `الخطوة ${step + 1} من ${QUESTIONS.length + 1}`}</span>
+            <span>
+              {softExitId
+                ? "تم حفظ طلبك"
+                : step >= 4
+                ? qualified
+                  ? "🟢 طلبك مؤهل"
+                  : "اكتمل التقييم"
+                : step === 3
+                ? "🔄 جاري تقييم طلبك..."
+                : `الخطوة ${step + 1} من ${totalSteps}`}
+            </span>
             <span className="font-mono">{Math.round(progress)}%</span>
           </div>
           <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
@@ -480,6 +497,32 @@ const ConfirmOrder = () => {
             />
           </div>
         </div>
+
+        {/* ===== Exclusive Qualification Banner ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl bg-gradient-to-br from-[#b38a2e]/10 to-emerald-500/5 border border-[#b38a2e]/20 p-4"
+        >
+          <p className="text-sm font-bold text-[#d4a84a] flex items-center gap-2 mb-2">
+            🎁 فقط الطلبات المؤهلة تحصل على:
+          </p>
+          <ul className="space-y-1.5 text-xs text-white/80">
+            <li className="flex items-center gap-2">
+              <Truck className="w-3.5 h-3.5 text-emerald-300" />
+              أولوية الشحن السريع
+            </li>
+            <li className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+              تجهيز سريع خلال ساعات
+            </li>
+            <li className="flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+              ضمان توفر المنتج
+            </li>
+          </ul>
+        </motion.div>
 
         {/* ===== Step 4: Smart Filtering Questions ===== */}
         <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 min-h-[220px]">
