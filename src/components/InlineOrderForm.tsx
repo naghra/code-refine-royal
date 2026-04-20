@@ -243,6 +243,7 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
 
       // Check if any product in order has gift enabled
       let hasGift = false;
+      let productImage: string | null = null;
       if (productId) {
         const { data: prod } = await supabase
           .from("products")
@@ -250,6 +251,15 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
           .eq("id", productId)
           .maybeSingle();
         if ((prod as any)?.has_gift) hasGift = true;
+        const { data: img } = await supabase
+          .from("product_images")
+          .select("url")
+          .eq("product_id", productId)
+          .order("is_main", { ascending: false })
+          .order("sort_order", { ascending: true })
+          .limit(1)
+          .maybeSingle();
+        productImage = (img as any)?.url ?? null;
       }
 
       if (requiresConfirmation) {
@@ -259,7 +269,7 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
           customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
           product_id: productId || null,
           product_name: productName,
-          product_image: null,
+          product_image: productImage,
           quantity: finalQuantity,
           unit_price: unitPrice,
           total: finalPrice,
