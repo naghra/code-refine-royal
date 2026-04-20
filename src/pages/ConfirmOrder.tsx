@@ -238,7 +238,11 @@ const ConfirmOrder = () => {
           clearInterval(interval);
           if (!recordedRef.current.done && pending?.order_id) {
             recordedRef.current.done = true;
-            recordResponse(pending.order_id, "no_response");
+            const partialScore = computePartialScore(answers);
+            recordResponse(pending.order_id, "no_response", {
+              lead_score: partialScore,
+              lead_quality: "warm_lead",
+            });
           }
           return 0;
         }
@@ -246,7 +250,7 @@ const ConfirmOrder = () => {
       });
     }, 1000);
     return () => clearInterval(interval);
-  }, [pending, success]);
+  }, [pending, success, answers]);
 
   // pagehide -> no_response (warm lead)
   useEffect(() => {
