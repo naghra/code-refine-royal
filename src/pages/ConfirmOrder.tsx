@@ -387,6 +387,171 @@ const ConfirmOrder = () => {
       className="min-h-screen px-4 py-6 md:py-10 bg-gradient-to-br from-[#0b0d12] via-[#10131a] to-[#0b0d12] relative overflow-hidden"
       dir="rtl"
     >
+      {/* ===== Ready-to-Receive Confirmation Modal (forces commitment) ===== */}
+      <AnimatePresence>
+        {showReadyModal && step === 0 && !softExitId && (
+          <motion.div
+            key="ready-modal"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-black/80 backdrop-blur-md"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ready-modal-title"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+              className="relative w-full max-w-md rounded-3xl border border-[#b38a2e]/25 bg-gradient-to-br from-[#10131a] via-[#0e1118] to-[#0b0d12] p-6 md:p-7 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] max-h-[92vh] overflow-y-auto"
+            >
+              {/* Glow accents */}
+              <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/15 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-[#b38a2e]/15 blur-3xl" />
+
+              <div className="relative space-y-5">
+                {/* Title */}
+                <div className="text-center space-y-2">
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 220, damping: 14 }}
+                    className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-amber-400/20 to-rose-500/20 border border-amber-300/30 flex items-center justify-center text-3xl"
+                  >
+                    🚨
+                  </motion.div>
+                  <h2
+                    id="ready-modal-title"
+                    className="text-2xl md:text-3xl font-extrabold text-white leading-tight"
+                  >
+                    تأكيد مهم قبل الشحن
+                  </h2>
+                  <p className="text-sm md:text-base text-white/75 leading-relaxed">
+                    هل أنت متأكد أنك متواجد لاستلام الطلب خلال 48 ساعة؟
+                  </p>
+                </div>
+
+                {/* Urgency Timer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.15 }}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-gradient-to-l from-rose-500/15 via-amber-500/15 to-rose-500/15 border border-amber-400/25"
+                >
+                  <span className="text-base">⏳</span>
+                  <span className="text-xs text-amber-100 font-semibold">
+                    لديك
+                  </span>
+                  <span
+                    className="text-base font-extrabold text-amber-200 font-mono tabular-nums"
+                    dir="ltr"
+                  >
+                    {formatTime(remaining)}
+                  </span>
+                  <span className="text-xs text-amber-100 font-semibold">
+                    لتأكيد الطلب قبل فقدان الأولوية
+                  </span>
+                </motion.div>
+
+                {/* Benefits */}
+                <motion.ul
+                  initial="hidden"
+                  animate="show"
+                  variants={{
+                    hidden: {},
+                    show: { transition: { staggerChildren: 0.06, delayChildren: 0.18 } },
+                  }}
+                  className="space-y-2"
+                >
+                  {[
+                    { icon: <Lock className="w-4 h-4" />, text: "حجز المنتج لك فوراً" },
+                    { icon: <Truck className="w-4 h-4" />, text: "أولوية الشحن السريع" },
+                    { icon: <Zap className="w-4 h-4" />, text: "تجهيز الطلب خلال ساعات" },
+                  ].map((b, i) => (
+                    <motion.li
+                      key={i}
+                      variants={{
+                        hidden: { opacity: 0, x: 10 },
+                        show: { opacity: 1, x: 0 },
+                      }}
+                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/[0.04] border border-white/10"
+                    >
+                      <span className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-400/25 text-emerald-300 flex items-center justify-center shrink-0">
+                        {b.icon}
+                      </span>
+                      <span className="text-sm text-white/90 font-medium">{b.text}</span>
+                    </motion.li>
+                  ))}
+                </motion.ul>
+
+                {/* Warning when "No" was clicked */}
+                <AnimatePresence>
+                  {showNoWarning && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="flex items-start gap-2 rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2.5">
+                        <AlertTriangle className="w-4 h-4 text-rose-300 mt-0.5 shrink-0" />
+                        <p className="text-xs text-rose-200 leading-relaxed">
+                          ⚠️ قد يتم إلغاء أولوية الطلب أو تأخيره. هل أنت متأكد؟
+                        </p>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* CTAs */}
+                <div className="space-y-3 pt-1">
+                  <motion.button
+                    whileHover={{ scale: 1.025 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => {
+                      try { navigator.vibrate?.(20); } catch {}
+                      setShowReadyModal(false);
+                      handleAnswer("ready", "yes");
+                    }}
+                    className="relative w-full h-16 rounded-2xl font-extrabold text-base md:text-lg text-white bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 shadow-[0_18px_40px_-12px_rgba(16,185,129,0.55)] overflow-hidden"
+                  >
+                    <span className="absolute inset-0 rounded-2xl ring-2 ring-emerald-300/40 animate-pulse pointer-events-none" />
+                    <span className="absolute -inset-1 bg-emerald-300/20 blur-2xl opacity-60 pointer-events-none" />
+                    <span className="relative flex items-center justify-center gap-2">
+                      ✅ نعم، جاهز للاستلام
+                    </span>
+                  </motion.button>
+
+                  <button
+                    onClick={() => {
+                      try { navigator.vibrate?.(10); } catch {}
+                      if (!showNoWarning) {
+                        setShowNoWarning(true);
+                        return;
+                      }
+                      // Confirmed "No" — soft-exit as warm lead
+                      setShowReadyModal(false);
+                      handleAnswer("ready", "no");
+                    }}
+                    className="w-full h-11 rounded-xl text-sm font-medium text-white/55 bg-white/[0.04] border border-white/10 hover:bg-white/[0.07] hover:text-white/70 transition-colors"
+                  >
+                    {showNoWarning ? "تأكيد: لست جاهزاً" : "❌ لا، لست متأكد"}
+                  </button>
+                </div>
+
+                {/* Trust note */}
+                <p className="text-center text-[11px] text-white/40 leading-relaxed pt-1">
+                  🔒 نؤكد فقط الطلبات الجاهزة للاستلام لتجنب التأخير
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Ambient gold glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-0 right-1/4 w-[28rem] h-[28rem] rounded-full bg-[#b38a2e]/10 blur-[120px]" />
