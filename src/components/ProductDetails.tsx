@@ -54,29 +54,41 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
       let data: any = null;
       
       if (productSlug) {
-        // Try slug first, then fall back to id (for backward compatibility)
-        const { data: bySlug } = await supabase.from("products").select("*").eq("slug", productSlug).maybeSingle();
+        // Single query: fetch product + main image in one round-trip
+        const { data: bySlug } = await supabase
+          .from("products")
+          .select("*, product_images(url, is_main, sort_order)")
+          .eq("slug", productSlug)
+          .maybeSingle();
         if (bySlug) {
           data = bySlug;
         } else {
-          const { data: byId } = await supabase.from("products").select("*").eq("id", productSlug).maybeSingle();
+          const { data: byId } = await supabase
+            .from("products")
+            .select("*, product_images(url, is_main, sort_order)")
+            .eq("id", productSlug)
+            .maybeSingle();
           data = byId;
         }
       } else {
-        const { data: first } = await supabase.from("products").select("*").eq("status", "active").order("created_at", { ascending: true }).limit(1).maybeSingle();
+        const { data: first } = await supabase
+          .from("products")
+          .select("*, product_images(url, is_main, sort_order)")
+          .eq("status", "active")
+          .order("created_at", { ascending: true })
+          .limit(1)
+          .maybeSingle();
         data = first;
       }
 
       if (data) {
         setProduct(data as Product);
         onProductLoaded?.(data.id);
-        const { data: imgs } = await supabase
-          .from("product_images")
-          .select("url")
-          .eq("product_id", data.id)
-          .eq("is_main", true)
-          .maybeSingle();
-        if (imgs?.url) setProductImage(imgs.url);
+        const imgs = (data.product_images as Array<{ url: string; is_main: boolean; sort_order: number }> | undefined) || [];
+        if (imgs.length) {
+          const main = imgs.find((i) => i.is_main) || imgs.sort((a, b) => a.sort_order - b.sort_order)[0];
+          if (main?.url) setProductImage(main.url);
+        }
       }
       setLoading(false);
     })();
@@ -159,6 +171,9 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
             src={productImage}
             alt={name}
             className="w-full h-auto object-contain"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="absolute top-4 left-4 flex gap-2 z-10">
             <button

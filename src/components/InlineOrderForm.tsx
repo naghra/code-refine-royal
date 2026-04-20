@@ -100,7 +100,7 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
   const finalPrice = selectedOffer ? selectedOffer.price : unitPrice * quantity;
 
   useEffect(() => {
-    (async () => {
+    const load = async () => {
       const { data } = await supabase
         .from("store_settings")
         .select("key, value")
@@ -125,7 +125,16 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
           }
         }
       }
-    })();
+    };
+    // Defer non-critical settings fetch until browser is idle to prioritize LCP
+    const w = window as any;
+    const handle = w.requestIdleCallback
+      ? w.requestIdleCallback(load, { timeout: 1500 })
+      : window.setTimeout(load, 200);
+    return () => {
+      if (w.cancelIdleCallback) w.cancelIdleCallback(handle);
+      else window.clearTimeout(handle);
+    };
   }, []);
 
   const normalizeDigits = (str: string) =>

@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import StoreHeader from "@/components/StoreHeader";
 import ProductDetails from "@/components/ProductDetails";
 import StoreFooter from "@/components/StoreFooter";
-import ProductReviews from "@/components/ProductReviews";
-import SocialProofBar from "@/components/SocialProofBar";
 import TrackingPixels from "@/components/TrackingPixels";
 import { useTrackVisit } from "@/hooks/useTrackVisit";
+
+// Lazy-load below-the-fold sections to speed up initial page render
+const ProductReviews = lazy(() => import("@/components/ProductReviews"));
+const SocialProofBar = lazy(() => import("@/components/SocialProofBar"));
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -34,9 +36,13 @@ const ProductPage = () => {
       <main className="flex-1">
         <div className="container">
           <ProductDetails productSlug={slug} onProductLoaded={setProductId} />
-          <SocialProofBar />
+          <Suspense fallback={null}>
+            <SocialProofBar />
+          </Suspense>
         </div>
-        <ProductReviews productId={productId} />
+        <Suspense fallback={null}>
+          <ProductReviews productId={productId} />
+        </Suspense>
       </main>
       <StoreFooter />
     </div>
