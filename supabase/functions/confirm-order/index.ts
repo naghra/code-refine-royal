@@ -12,7 +12,7 @@ serve(async (req) => {
   }
 
   try {
-    const { order_id, response } = await req.json();
+    const { order_id, response, lead_score, lead_quality } = await req.json();
     if (!order_id || typeof order_id !== "string") {
       return new Response(
         JSON.stringify({ success: false, error: "order_id is required" }),
@@ -37,6 +37,14 @@ serve(async (req) => {
     } else {
       // Keep confirmed=false; just record the response
       updatePayload.confirmed = false;
+    }
+
+    // Lead scoring (optional)
+    if (typeof lead_score === "number" && lead_score >= 0 && lead_score <= 100) {
+      updatePayload.lead_score = Math.round(lead_score);
+    }
+    if (lead_quality === "high_intent" || lead_quality === "warm_lead") {
+      updatePayload.lead_quality = lead_quality;
     }
 
     // Try local first
