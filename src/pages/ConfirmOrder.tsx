@@ -96,10 +96,11 @@ const ConfirmOrder = () => {
   const recordResponse = async (
     orderId: string,
     response: "confirmed" | "rejected" | "no_response",
+    extra?: { lead_score?: number; lead_quality?: "high_intent" | "warm_lead" },
   ) => {
     try {
       await supabase.functions.invoke("confirm-order", {
-        body: { order_id: orderId, response },
+        body: { order_id: orderId, response, ...(extra || {}) },
       });
     } catch (e) {
       console.error("Failed to record confirmation response:", e);
