@@ -273,69 +273,83 @@ export default function AdminConfirmedOrders() {
         </motion.div>
       </div>
 
-      {/* Date filter */}
-      <div className="mb-4 bg-card rounded-2xl border border-border p-4 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          {([
-            { k: "all", label: "الكل" },
-            { k: "today", label: "اليوم" },
-            { k: "7d", label: "آخر 7 أيام" },
-            { k: "30d", label: "آخر 30 يوم" },
-          ] as { k: DatePreset; label: string }[]).map((p) => (
-            <Button
-              key={p.k}
-              size="sm"
-              variant={preset === p.k ? "default" : "outline"}
-              onClick={() => applyPreset(p.k)}
-              className="h-8 text-xs"
-            >
-              {p.label}
-            </Button>
-          ))}
+      {/* Search + Filter */}
+      <div className="mb-4 flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="ابحث برقم الطلب، الاسم، الجوال، المدينة..."
+            className="pr-10"
+          />
         </div>
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-muted-foreground">من تاريخ</label>
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => { setDateFrom(e.target.value); setPreset("custom"); }}
-              className="h-9 w-[160px]"
-              dir="ltr"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-[11px] text-muted-foreground">إلى تاريخ</label>
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => { setDateTo(e.target.value); setPreset("custom"); }}
-              className="h-9 w-[160px]"
-              dir="ltr"
-            />
-          </div>
-          {(dateFrom || dateTo) && (
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => applyPreset("all")}
-              className="h-9 text-xs text-muted-foreground"
-            >
-              مسح الفلتر
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="outline" className="gap-2 h-10 relative">
+              <SlidersHorizontal className="w-4 h-4" />
+              فلترة
+              {(dateFrom || dateTo) && (
+                <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
+              )}
             </Button>
-          )}
-        </div>
-      </div>
+          </PopoverTrigger>
+          <PopoverContent align="end" className="w-[320px] p-4" dir="rtl">
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-sm font-semibold text-foreground">فلترة حسب التاريخ</h4>
+              {(dateFrom || dateTo) && (
+                <button
+                  onClick={() => applyPreset("all")}
+                  className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                >
+                  <X className="w-3 h-3" /> مسح
+                </button>
+              )}
+            </div>
 
-      {/* Search */}
-      <div className="mb-4 relative">
-        <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="ابحث برقم الطلب، الاسم، الجوال، المدينة..."
-          className="pr-10"
-        />
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {([
+                { k: "all", label: "الكل" },
+                { k: "today", label: "اليوم" },
+                { k: "7d", label: "آخر 7 أيام" },
+                { k: "30d", label: "آخر 30 يوم" },
+              ] as { k: DatePreset; label: string }[]).map((p) => (
+                <Button
+                  key={p.k}
+                  size="sm"
+                  variant={preset === p.k ? "default" : "outline"}
+                  onClick={() => applyPreset(p.k)}
+                  className="h-8 text-xs"
+                >
+                  {p.label}
+                </Button>
+              ))}
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-medium text-muted-foreground">من تاريخ</label>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => { setDateFrom(e.target.value); setPreset("custom"); }}
+                  className="h-9"
+                  dir="ltr"
+                />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[11px] font-medium text-muted-foreground">إلى تاريخ</label>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => { setDateTo(e.target.value); setPreset("custom"); }}
+                  className="h-9"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
       {/* Table */}
