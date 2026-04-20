@@ -173,6 +173,45 @@
   animation: marquee 25s linear infinite;
 }
 
+/* Question funnel attention animations */
+@keyframes glow-border-rotate {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-glow-border {
+  background: linear-gradient(120deg, #b38a2e, #d4a84a, #f5c66b, #d4a84a, #b38a2e);
+  background-size: 300% 300%;
+  animation: glow-border-rotate 4s ease-in-out infinite;
+}
+
+@keyframes progress-slide {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+.animate-progress-slide {
+  animation: progress-slide 2.2s ease-in-out infinite;
+}
+
+@keyframes soft-pulse {
+  0%, 100% { transform: scale(1); box-shadow: 0 15px 35px -10px rgba(16,185,129,0.5); }
+  50% { transform: scale(1.035); box-shadow: 0 20px 45px -8px rgba(16,185,129,0.75); }
+}
+.animate-soft-pulse {
+  animation: soft-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes micro-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+.animate-micro-shake {
+  animation: micro-shake 0.5s ease-in-out;
+}
+
 /* Product card shadows */
 .product-card-shadow {
   box-shadow: 0 1px 3px hsl(var(--foreground) / 0.04), 0 4px 12px hsl(var(--foreground) / 0.03);
