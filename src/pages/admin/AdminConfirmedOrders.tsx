@@ -7,12 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { motion } from "framer-motion";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { motion, AnimatePresence } from "framer-motion";
+import { notify } from "@/lib/notify";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
   CheckCircle2, Search, Phone, MapPin, RefreshCw, ShoppingBag, TrendingUp, Calendar, Percent, SlidersHorizontal, X,
+  Send, Download, Gift, Package, Flame, Sparkles, Loader2, Eye, Hash, Home,
 } from "lucide-react";
 
 type ConfirmedOrder = {
@@ -21,10 +25,35 @@ type ConfirmedOrder = {
   customer_name: string;
   customer_phone: string;
   city: string | null;
+  address: string | null;
   total: number;
+  subtotal: number;
+  shipping_cost: number;
   status: string;
   created_at: string;
   confirmed_at: string | null;
+  lead_score: number | null;
+  lead_quality: string | null;
+  gift_name: string | null;
+  gift_sku: string | null;
+  notes: string | null;
+  cod_network_status: string | null;
+  cod_network_lead_id: string | null;
+};
+
+type OrderItem = {
+  id: string;
+  product_id: string | null;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  total_price: number;
+};
+
+const CURRENCY_COUNTRY_MAP: Record<string, string> = {
+  SAR: "KSA", AED: "ARE", KWD: "KWT", BHD: "BHR", QAR: "QAT",
+  OMR: "OMN", EGP: "EGY", USD: "USA", EUR: "DEU", GBP: "GBR",
+  MAD: "MAR", TRY: "TUR", MRU: "MRT",
 };
 
 const RIYADH_TZ = "Asia/Riyadh";
