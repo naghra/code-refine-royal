@@ -15,6 +15,7 @@ import {
   Lock,
   PartyPopper,
   ChevronLeft,
+  AlertTriangle,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -37,11 +38,22 @@ const TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes
 
 type Answer = "yes" | "no" | null;
 
-const QUESTIONS: { id: "ready" | "cash" | "available"; q: string; emoji: string }[] = [
-  { id: "ready", q: "هل أنت جاهز لاستلام الطلب خلال 48 ساعة؟", emoji: "🚚" },
-  { id: "cash", q: "هل المبلغ متوفر عند الاستلام؟", emoji: "💵" },
-  { id: "available", q: "هل ستكون متاحًا للرد على الهاتف؟", emoji: "📞" },
+type QId = "ready" | "cash" | "available";
+
+const QUESTIONS: {
+  id: QId;
+  q: string;
+  emoji: string;
+  weight: number;
+  hint: string;
+}[] = [
+  { id: "ready", q: "🚚 هل أنت جاهز لاستلام الطلب خلال 48 ساعة؟", emoji: "🚚", weight: 30, hint: "نضمن لك أولوية الشحن للمؤهلين فقط" },
+  { id: "cash", q: "💰 هل المبلغ متوفر عند الاستلام؟", emoji: "💰", weight: 30, hint: "للحفاظ على جودة الخدمة لعملائنا" },
+  { id: "available", q: "📞 هل ستكون متاحًا للرد على الهاتف؟", emoji: "📞", weight: 20, hint: "نتواصل مرة واحدة فقط لتأكيد العنوان" },
 ];
+
+const QUALIFY_THRESHOLD = 70;
+const FAST_INTERACTION_MS = 25_000; // answering all 3 questions under 25s
 
 const ConfirmOrder = () => {
   const navigate = useNavigate();
@@ -49,7 +61,7 @@ const ConfirmOrder = () => {
   const cs = currency.symbol;
 
   const [pending, setPending] = useState<PendingOrder | null>(null);
-  const [step, setStep] = useState(0); // 0..2 questions, 3 = final CTA / disqualified
+  const [step, setStep] = useState(0); // 0..2 questions, 3 = evaluating, 4 = result
   const [answers, setAnswers] = useState<Record<string, Answer>>({
     ready: null,
     cash: null,
@@ -61,6 +73,10 @@ const ConfirmOrder = () => {
   const [expired, setExpired] = useState(false);
   const [remaining, setRemaining] = useState(TIMEOUT_MS);
   const recordedRef = useRef({ done: false });
+  const startedAtRef = useRef<number>(Date.now());
+  const [evaluating, setEvaluating] = useState(false);
+  const [score, setScore] = useState(0);
+  const [softExitId, setSoftExitId] = useState<QId | null>(null);
 
   // Live social proof counters
   const [confirmedToday, setConfirmedToday] = useState(124);
@@ -153,35 +169,64 @@ const ConfirmOrder = () => {
     return () => window.removeEventListener("pagehide", handler);
   }, [pending]);
 
-  const disqualified = useMemo(
-    () => Object.values(answers).some((a) => a === "no"),
-    [answers],
-  );
+  const computeScore = (a: Record<string, Answer>, fast: boolean) => {
+    let s = 0;
+    QUESTIONS.forEach((q) => {
+      if (a[q.id] === "yes") s += q.weight;
+    });
+    if (fast) s += 10;
+    return s;
+  };
+
+  const qualified = score >= QUALIFY_THRESHOLD;
   const allYes = useMemo(
     () => Object.values(answers).every((a) => a === "yes"),
     [answers],
   );
 
-  const handleAnswer = (qid: string, val: Answer) => {
-    setAnswers((prev) => ({ ...prev, [qid]: val }));
+  const finalizeFunnel = (finalAnswers: Record<string, Answer>) => {
+    const elapsed = Date.now() - startedAtRef.current;
+    const fast = elapsed <= FAST_INTERACTION_MS;
+    const s = computeScore(finalAnswers, fast);
+    setScore(s);
+    setEvaluating(true);
+    setStep(3);
+    // Brief evaluation animation
     setTimeout(() => {
-      if (val === "no") {
-        // Mark as warm lead immediately, do not send to call center
+      setEvaluating(false);
+      setStep(4);
+      // If not qualified, mark warm lead immediately (do NOT send to call center)
+      if (s < QUALIFY_THRESHOLD && pending?.order_id && !recordedRef.current.done) {
+        recordedRef.current.done = true;
+        recordResponse(pending.order_id, "rejected");
+      }
+    }, 1400);
+  };
+
+  const handleAnswer = (qid: QId, val: Answer) => {
+    const next = { ...answers, [qid]: val };
+    setAnswers(next);
+    setTimeout(() => {
+      // Step 1 ("ready") — soft-exit on "No": save warm lead and stop the flow
+      if (qid === "ready" && val === "no") {
+        setSoftExitId("ready");
         if (pending?.order_id && !recordedRef.current.done) {
           recordedRef.current.done = true;
           recordResponse(pending.order_id, "rejected");
         }
-        setStep(3);
-      } else if (step < QUESTIONS.length - 1) {
+        return;
+      }
+      // Move forward; finalize after the last question
+      if (step < QUESTIONS.length - 1) {
         setStep((s) => s + 1);
       } else {
-        setStep(3);
+        finalizeFunnel(next);
       }
-    }, 280);
+    }, 240);
   };
 
   const handleConfirm = async () => {
-    if (!pending || !allYes || submitting) return;
+    if (!pending || !qualified || submitting) return;
     setSubmitting(true);
     setError("");
     try {
