@@ -869,13 +869,13 @@ const ConfirmOrder = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleAnswer(QUESTIONS[step].id, "yes")}
-                    className="group relative h-16 rounded-2xl font-extrabold text-base text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-[0_15px_35px_-10px_rgba(16,185,129,0.5)] transition-all hover:scale-[1.03] active:scale-[0.97]"
+                    className={`group relative h-16 rounded-2xl font-extrabold text-base text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-[0_15px_35px_-10px_rgba(16,185,129,0.5)] transition-transform duration-200 hover:scale-105 active:scale-[0.97] animate-soft-pulse ${idleShake ? "animate-micro-shake" : ""}`}
                   >
                     ✅ نعم
                   </button>
                   <button
                     onClick={() => handleAnswer(QUESTIONS[step].id, "no")}
-                    className="h-16 rounded-2xl font-semibold text-base text-white/70 bg-white/5 border border-white/15 hover:bg-white/10 transition-all"
+                    className={`h-16 rounded-2xl font-semibold text-base text-white/70 bg-white/5 border border-white/15 hover:bg-white/10 transition-transform duration-200 hover:scale-105 active:scale-[0.97] ${idleShake ? "animate-micro-shake" : ""}`}
                   >
                     لا
                   </button>
