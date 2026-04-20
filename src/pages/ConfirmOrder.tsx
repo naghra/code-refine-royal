@@ -1032,6 +1032,7 @@ const ConfirmOrder = () => {
             </button>
           )}
         </div>
+        </motion.div>
 
         {/* ===== Exclusive Qualification Banner (moved below questions) ===== */}
         <motion.div
