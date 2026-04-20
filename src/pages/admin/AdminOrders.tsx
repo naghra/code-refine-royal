@@ -354,6 +354,18 @@ function OrderCard({ order, index, onStatusChange, onOpen, onDelete, selected, o
               🎁 {order.gift_name || order.gift_sku}
             </span>
           )}
+          {order.confirmation_response === "rejected" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-red-50 text-red-700 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-800">
+              <XCircle className="w-2.5 h-2.5" />
+              رفض التأكيد
+            </span>
+          )}
+          {order.confirmation_response === "no_response" && (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-medium bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800">
+              <Clock className="w-2.5 h-2.5" />
+              بدون رد
+            </span>
+          )}
         </div>
 
         {/* Quick Actions */}
