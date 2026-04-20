@@ -412,15 +412,26 @@ export default function AdminConfirmedOrders() {
             <p className="text-sm text-muted-foreground">الطلبات التي أكّدها العملاء بأنفسهم</p>
           </div>
         </div>
-        <Button
-          onClick={fetchOrders}
-          disabled={refreshing}
-          variant="outline"
-          className="gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
-          تحديث
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={() => exportCSV(filtered)}
+            variant="outline"
+            className="gap-2"
+            disabled={filtered.length === 0}
+          >
+            <Download className="w-4 h-4" />
+            تصدير CSV
+          </Button>
+          <Button
+            onClick={fetchOrders}
+            disabled={refreshing}
+            variant="outline"
+            className="gap-2"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
+            تحديث
+          </Button>
+        </div>
       </motion.div>
 
       {/* Stats */}
