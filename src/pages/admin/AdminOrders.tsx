@@ -55,6 +55,8 @@ type Order = {
   gift_name: string | null;
   gift_selected_at: string | null;
   confirmation_response: string | null;
+  lead_score: number | null;
+  lead_quality: string | null;
 };
 
 type OrderItem = {
