@@ -241,27 +241,10 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
       const snapValue = snapchatConversionValue != null ? snapchatConversionValue * finalQuantity : null;
       const snapParam = snapValue != null ? `&snap_value=${snapValue}` : "";
 
-      // Check if any product in order has gift enabled
-      let hasGift = false;
-      let productImage: string | null = null;
-      if (productId) {
-        const { data: prod } = await supabase
-          .from("products")
-          .select("has_gift")
-          .eq("id", productId)
-          .maybeSingle();
-        if ((prod as any)?.has_gift) hasGift = true;
-        const { data: img } = await supabase
-          .from("product_images")
-          .select("url")
-          .eq("product_id", productId)
-          .order("is_main", { ascending: false })
-          .order("sort_order", { ascending: true })
-          .limit(1)
-          .maybeSingle();
-        productImage = (img as any)?.url ?? null;
-      }
-
+      // Fast path: if confirmation is required, navigate immediately.
+      // /confirm fetches product details itself, so we don't need to block
+      // here on extra DB lookups. We pre-store what we already know and let
+      // the confirm page hydrate the rest.
       if (requiresConfirmation) {
         const pending = {
           order_id: orderId,
@@ -269,16 +252,30 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
           customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
           product_id: productId || null,
           product_name: productName,
-          product_image: productImage,
+          product_image: null as string | null,
           quantity: finalQuantity,
           unit_price: unitPrice,
           total: finalPrice,
-          has_gift: hasGift,
+          has_gift: false,
           created_at: Date.now(),
         };
         sessionStorage.setItem("pending_order", JSON.stringify(pending));
         navigate("/confirm");
         return;
+      }
+
+      // Non-confirmation flow: we need has_gift to decide route.
+      // Run both lookups in parallel instead of sequentially.
+      let hasGift = false;
+      if (productId) {
+        const [prodRes] = await Promise.all([
+          supabase
+            .from("products")
+            .select("has_gift")
+            .eq("id", productId)
+            .maybeSingle(),
+        ]);
+        if ((prodRes.data as any)?.has_gift) hasGift = true;
       }
 
       if (hasGift) {
