@@ -154,6 +154,16 @@ const ConfirmOrder = () => {
     }
   };
 
+  // Compute partial score from any answered questions so far.
+  // Even one or two "yes" answers are recorded, so partial engagement is tracked.
+  const computePartialScore = (a: Record<string, Answer>) => {
+    let s = 0;
+    QUESTIONS.forEach((q) => {
+      if (a[q.id] === "yes") s += q.weight;
+    });
+    return s;
+  };
+
   // Load pending order from session storage
   useEffect(() => {
     const raw = sessionStorage.getItem("pending_order");
