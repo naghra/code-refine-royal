@@ -163,6 +163,46 @@ const ConfirmOrder = () => {
     }
   }, [navigate]);
 
+  // Hydrate product image + has_gift in the background (the inline form
+  // skips these lookups for instant redirect, so /confirm fetches them here).
+  useEffect(() => {
+    if (!pending?.product_id) return;
+    if (pending.product_image && pending.has_gift !== undefined) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        const [imgRes, prodRes] = await Promise.all([
+          supabase
+            .from("product_images")
+            .select("url")
+            .eq("product_id", pending.product_id!)
+            .order("is_main", { ascending: false })
+            .order("sort_order", { ascending: true })
+            .limit(1)
+            .maybeSingle(),
+          supabase
+            .from("products")
+            .select("has_gift")
+            .eq("id", pending.product_id!)
+            .maybeSingle(),
+        ]);
+        if (cancelled) return;
+        const imageUrl = (imgRes.data as any)?.url ?? null;
+        const hasGift = !!(prodRes.data as any)?.has_gift;
+        setPending((prev) => {
+          if (!prev) return prev;
+          const next = { ...prev, product_image: prev.product_image ?? imageUrl, has_gift: prev.has_gift || hasGift };
+          try { sessionStorage.setItem("pending_order", JSON.stringify(next)); } catch {}
+          return next;
+        });
+      } catch (e) {
+        console.error("Failed to hydrate pending order:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [pending?.product_id, pending?.product_image, pending?.has_gift]);
+
   // Countdown
   useEffect(() => {
     if (!pending || success) return;
