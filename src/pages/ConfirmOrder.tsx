@@ -255,8 +255,16 @@ const ConfirmOrder = () => {
         recordedRef.current.done = true;
         try {
           const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/confirm-order`;
+          const partialScore = computePartialScore(answers);
           const blob = new Blob(
-            [JSON.stringify({ order_id: pending.order_id, response: "no_response" })],
+            [
+              JSON.stringify({
+                order_id: pending.order_id,
+                response: "no_response",
+                lead_score: partialScore,
+                lead_quality: "warm_lead",
+              }),
+            ],
             { type: "application/json" },
           );
           navigator.sendBeacon?.(url, blob);
@@ -265,7 +273,7 @@ const ConfirmOrder = () => {
     };
     window.addEventListener("pagehide", handler);
     return () => window.removeEventListener("pagehide", handler);
-  }, [pending]);
+  }, [pending, answers]);
 
   const computeScore = (a: Record<string, Answer>, fast: boolean) => {
     let s = 0;
