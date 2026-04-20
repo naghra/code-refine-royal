@@ -368,6 +368,22 @@ function OrderCard({ order, index, onStatusChange, onOpen, onDelete, selected, o
               بدون رد
             </span>
           )}
+          {order.lead_quality === "high_intent" && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800"
+              title={`نتيجة التأهيل: ${order.lead_score ?? 0}/100`}
+            >
+              🟢 High Intent {order.lead_score != null ? `· ${order.lead_score}` : ""}
+            </span>
+          )}
+          {order.lead_quality === "warm_lead" && (
+            <span
+              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[10px] font-bold bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/30 dark:text-orange-400 dark:border-orange-800"
+              title={`نتيجة التأهيل: ${order.lead_score ?? 0}/100`}
+            >
+              🟠 Warm Lead {order.lead_score != null ? `· ${order.lead_score}` : ""}
+            </span>
+          )}
         </div>
 
         {/* Quick Actions */}
