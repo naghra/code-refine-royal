@@ -768,34 +768,22 @@ const ConfirmOrder = () => {
           </div>
         </div>
 
-        {/* ===== Exclusive Qualification Banner ===== */}
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="rounded-2xl bg-gradient-to-br from-[#b38a2e]/10 to-emerald-500/5 border border-[#b38a2e]/20 p-4"
-        >
-          <p className="text-sm font-bold text-[#d4a84a] flex items-center gap-2 mb-2">
-            🎁 فقط الطلبات المؤهلة تحصل على:
-          </p>
-          <ul className="space-y-1.5 text-xs text-white/80">
-            <li className="flex items-center gap-2">
-              <Truck className="w-3.5 h-3.5 text-emerald-300" />
-              أولوية الشحن السريع
-            </li>
-            <li className="flex items-center gap-2">
-              <Zap className="w-3.5 h-3.5 text-amber-300" />
-              تجهيز سريع خلال ساعات
-            </li>
-            <li className="flex items-center gap-2">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
-              ضمان توفر المنتج
-            </li>
-          </ul>
-        </motion.div>
+        {/* ===== Smart Filtering Funnel (highlighted, moved above benefits) ===== */}
+        <div className="relative rounded-3xl border-2 border-[#b38a2e]/50 bg-gradient-to-br from-[#1a1d27] via-[#13161e] to-[#0e1118] p-5 md:p-6 min-h-[280px] shadow-[0_25px_60px_-15px_rgba(179,138,46,0.35)] ring-1 ring-[#d4a84a]/20">
+          {/* Glow accents to draw attention */}
+          <div className="pointer-events-none absolute -top-16 -right-10 w-48 h-48 rounded-full bg-[#b38a2e]/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-10 w-48 h-48 rounded-full bg-emerald-500/15 blur-3xl" />
 
-        {/* ===== Smart Filtering Funnel ===== */}
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 min-h-[260px]">
+          {/* Section label */}
+          {!softExitId && step < QUESTIONS.length && (
+            <div className="relative flex items-center justify-center mb-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#b38a2e]/20 border border-[#b38a2e]/40 text-[#d4a84a] text-[11px] font-bold uppercase tracking-wide">
+                <Sparkles className="w-3 h-3" />
+                تحقق سريع من الأهلية
+              </div>
+            </div>
+          )}
+          <div className="relative">
           <AnimatePresence mode="wait">
             {/* Soft exit on Step 1 "No" — saved as warm lead */}
             {softExitId && (
@@ -824,29 +812,36 @@ const ConfirmOrder = () => {
             {!softExitId && step < QUESTIONS.length && (
               <motion.div
                 key={`q-${step}`}
-                initial={{ opacity: 0, x: 30 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -30 }}
+                initial={{ opacity: 0, x: 30, scale: 0.97 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -30, scale: 0.97 }}
                 transition={{ duration: 0.3 }}
                 className="space-y-5"
               >
-                <div className="text-center space-y-2">
-                  <div className="text-3xl">{QUESTIONS[step].emoji}</div>
-                  <p className="text-base md:text-lg font-bold text-white leading-relaxed">
+                <div className="text-center space-y-3">
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 220, damping: 14 }}
+                    className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#b38a2e]/25 to-emerald-500/15 border border-[#d4a84a]/30 flex items-center justify-center text-3xl shadow-lg shadow-[#b38a2e]/20"
+                  >
+                    {QUESTIONS[step].emoji}
+                  </motion.div>
+                  <p className="text-lg md:text-xl font-extrabold text-white leading-relaxed">
                     {QUESTIONS[step].q}
                   </p>
-                  <p className="text-[11px] text-white/50">{QUESTIONS[step].hint}</p>
+                  <p className="text-xs text-white/60">{QUESTIONS[step].hint}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     onClick={() => handleAnswer(QUESTIONS[step].id, "yes")}
-                    className="group relative h-14 rounded-2xl font-bold text-sm text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-lg shadow-emerald-500/20 transition-all hover:scale-[1.03] active:scale-[0.97]"
+                    className="group relative h-16 rounded-2xl font-extrabold text-base text-white bg-gradient-to-br from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 shadow-[0_15px_35px_-10px_rgba(16,185,129,0.5)] transition-all hover:scale-[1.03] active:scale-[0.97]"
                   >
                     ✅ نعم
                   </button>
                   <button
                     onClick={() => handleAnswer(QUESTIONS[step].id, "no")}
-                    className="h-14 rounded-2xl font-semibold text-sm text-white/70 bg-white/5 border border-white/10 hover:bg-white/10 transition-all"
+                    className="h-16 rounded-2xl font-semibold text-base text-white/70 bg-white/5 border border-white/15 hover:bg-white/10 transition-all"
                   >
                     لا
                   </button>
