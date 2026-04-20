@@ -177,6 +177,7 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
       if (!data?.success) throw new Error(data?.error || "Order creation failed");
 
       const orderId = data.order_id;
+      const requiresConfirmation = !!data.requires_confirmation;
 
       // Fire-and-forget: geolocate IP for this order
       supabase.functions.invoke("geolocate-ip", {
@@ -249,6 +250,25 @@ const InlineOrderForm = ({ productName, productId, productSku, unitPrice, quanti
           .eq("id", productId)
           .maybeSingle();
         if ((prod as any)?.has_gift) hasGift = true;
+      }
+
+      if (requiresConfirmation) {
+        const pending = {
+          order_id: orderId,
+          customer_name: fullName.trim(),
+          customer_phone: normalizeDigits(phone.trim().replace(/\s/g, "")),
+          product_id: productId || null,
+          product_name: productName,
+          product_image: null,
+          quantity: finalQuantity,
+          unit_price: unitPrice,
+          total: finalPrice,
+          has_gift: hasGift,
+          created_at: Date.now(),
+        };
+        sessionStorage.setItem("pending_order", JSON.stringify(pending));
+        navigate("/confirm");
+        return;
       }
 
       if (hasGift) {
