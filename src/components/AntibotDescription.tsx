@@ -141,12 +141,32 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
 
       {/* Description Area */}
       <div id="protected-description">
-        {!countrySelected ? null : loading ? (
+        {/*
+          Always render the default description in the DOM so it is visible
+          in "View Source" for crawlers/bots. Hide it visually for real users
+          once we have the real description (or while loading / picking country).
+        */}
+        {defaultDescription ? (
+          <div
+            aria-hidden={countrySelected && !error ? "true" : undefined}
+            className={
+              countrySelected && (loading || descriptionHtml || error)
+                ? "hidden"
+                : undefined
+            }
+          >
+            {defaultDescription}
+          </div>
+        ) : null}
+
+        {countrySelected && loading && (
           <div className="flex items-center justify-center py-8">
             <div className="w-6 h-6 border-2 border-border border-t-foreground rounded-full animate-spin" />
             <span className="mr-3 text-sm text-muted-foreground">جاري تحميل الوصف...</span>
           </div>
-        ) : error ? (
+        )}
+
+        {countrySelected && !loading && error && (
           <div className="text-center py-6">
             <p className="text-sm text-muted-foreground mb-3">تعذر تحميل الوصف الآن، حاول مرة أخرى.</p>
             <button
@@ -156,14 +176,14 @@ const AntibotDescription = ({ productHandle, defaultDescription }: Props) => {
               إعادة المحاولة
             </button>
           </div>
-        ) : descriptionHtml ? (
+        )}
+
+        {countrySelected && !loading && !error && descriptionHtml && (
           <div
             dangerouslySetInnerHTML={{ __html: descriptionHtml }}
             className="prose prose-sm max-w-none"
             dir="rtl"
           />
-        ) : (
-          defaultDescription || null
         )}
       </div>
     </>
