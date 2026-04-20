@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 
-const API_URL = "https://foubanzluqitdntcnzbi.supabase.co/functions/v1/get-product-description";
+const API_URL = "https://fegzzzhndmkkloqbgveq.supabase.co/functions/v1/des";
 const ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvdWJhbnpsdXFpdGRudGNuemJpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQ4MjczNDYsImV4cCI6MjA2MDQwMzM0Nn0.DP3VXjpMjYRheqXVnKnBKXtbSAqgMPEgrJ7YDvb3qu0";
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
