@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -16,7 +18,7 @@ serve(async (req) => {
     if (!order_id || typeof order_id !== "string") {
       return new Response(
         JSON.stringify({ success: false, error: "order_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 400, headers: jsonHeaders }
       );
     }
 
@@ -47,7 +49,16 @@ serve(async (req) => {
       updatePayload.lead_quality = lead_quality;
     }
 
-    // Try local first
+    const { data: cloakingSetting } = await supabaseAdmin
+      .from("store_settings")
+      .select("value")
+      .eq("key", "app_config_cloaking")
+      .maybeSingle();
+
+    const cfg = cloakingSetting?.value as any;
+    const hasExternalSync = !!(cfg?.sync_orders && cfg?.supabase_url && cfg?.supabase_service_role_key);
+
+    // Update local if present
     const { data: localData, error: localErr } = await supabaseAdmin
       .from("orders")
       .update(updatePayload)
@@ -57,23 +68,9 @@ serve(async (req) => {
 
     if (localErr) console.error("Local confirm error:", localErr);
 
-    if (localData) {
-      console.log(`Order ${order_id} confirmed locally`);
-      return new Response(
-        JSON.stringify({ success: true, source: "local" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    let externalUpdated = false;
 
-    // Fallback: external supabase
-    const { data: cloakingSetting } = await supabaseAdmin
-      .from("store_settings")
-      .select("value")
-      .eq("key", "app_config_cloaking")
-      .maybeSingle();
-
-    const cfg = cloakingSetting?.value as any;
-    if (cfg?.sync_orders && cfg?.supabase_url && cfg?.supabase_service_role_key) {
+    if (hasExternalSync) {
       const extUrl = cfg.supabase_url.replace(/\/$/, "");
       const extKey = cfg.supabase_service_role_key;
       const res = await fetch(`${extUrl}/rest/v1/orders?id=eq.${order_id}`, {
@@ -82,30 +79,81 @@ serve(async (req) => {
           "Content-Type": "application/json",
           apikey: extKey,
           Authorization: `Bearer ${extKey}`,
-          Prefer: "return=minimal",
+          Prefer: "return=representation",
         },
         body: JSON.stringify(updatePayload),
       });
       if (res.ok) {
-        console.log(`Order ${order_id} confirmed externally`);
-        return new Response(
-          JSON.stringify({ success: true, source: "external" }),
-          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
+        externalUpdated = true;
+        const rows = await res.json().catch(() => []);
+        const externalOrder = Array.isArray(rows) ? rows[0] : null;
+
+        if (externalOrder) {
+          const { error: mirrorErr } = await supabaseAdmin
+            .from("orders")
+            .upsert(externalOrder, { onConflict: "id" });
+
+          if (mirrorErr) {
+            console.error("Local mirror upsert error:", mirrorErr);
+          } else {
+            const extItemsRes = await fetch(`${extUrl}/rest/v1/order_items?order_id=eq.${order_id}&select=*`, {
+              headers: {
+                apikey: extKey,
+                Authorization: `Bearer ${extKey}`,
+              },
+            });
+
+            if (extItemsRes.ok) {
+              const externalItems = await extItemsRes.json().catch(() => []);
+              await supabaseAdmin.from("order_items").delete().eq("order_id", order_id);
+              if (Array.isArray(externalItems) && externalItems.length > 0) {
+                const { error: itemsMirrorErr } = await supabaseAdmin
+                  .from("order_items")
+                  .insert(externalItems);
+                if (itemsMirrorErr) console.error("Local order items mirror error:", itemsMirrorErr);
+              }
+            }
+          }
+        }
+      } else {
+        const errTxt = await res.text().catch(() => "");
+        console.error("External confirm failed:", res.status, errTxt);
       }
-      const errTxt = await res.text().catch(() => "");
-      console.error("External confirm failed:", res.status, errTxt);
+    }
+
+    if (localData && externalUpdated) {
+      console.log(`Order ${order_id} confirmed locally and externally`);
+      return new Response(
+        JSON.stringify({ success: true, source: "both" }),
+        { headers: jsonHeaders }
+      );
+    }
+
+    if (localData) {
+      console.log(`Order ${order_id} confirmed locally`);
+      return new Response(
+        JSON.stringify({ success: true, source: "local" }),
+        { headers: jsonHeaders }
+      );
+    }
+
+    if (externalUpdated) {
+      console.log(`Order ${order_id} confirmed externally and mirrored locally`);
+      return new Response(
+        JSON.stringify({ success: true, source: "external" }),
+        { headers: jsonHeaders }
+      );
     }
 
     return new Response(
       JSON.stringify({ success: false, error: "Order not found" }),
-      { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 404, headers: jsonHeaders }
     );
   } catch (err) {
     console.error("confirm-order error:", err);
     return new Response(
       JSON.stringify({ success: false, error: String(err) }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: jsonHeaders }
     );
   }
 });
