@@ -41,6 +41,33 @@ const formatRiyadh = (iso: string | null) => {
   }
 };
 
+type DatePreset = "today" | "7d" | "30d" | "all" | "custom";
+
+// Convert a local "YYYY-MM-DD" date input value into an ISO timestamp
+// representing the start/end of that day in Riyadh time (UTC+3).
+const riyadhDayBoundsISO = (dateStr: string, end = false) => {
+  // Riyadh is UTC+3 (no DST). Start of day = 00:00 +03:00 → 21:00 UTC previous day.
+  const t = end ? "23:59:59.999" : "00:00:00.000";
+  return new Date(`${dateStr}T${t}+03:00`).toISOString();
+};
+
+const todayInRiyadh = () => {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: RIYADH_TZ,
+    year: "numeric", month: "2-digit", day: "2-digit",
+  });
+  return fmt.format(new Date()); // YYYY-MM-DD
+};
+
+const addDaysRiyadh = (days: number) => {
+  const today = todayInRiyadh();
+  const d = new Date(`${today}T00:00:00+03:00`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: RIYADH_TZ, year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(d);
+};
+
 export default function AdminConfirmedOrders() {
   const { currency } = useCurrency();
   const cs = currency.symbol;
@@ -50,19 +77,40 @@ export default function AdminConfirmedOrders() {
   const [search, setSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [responseStats, setResponseStats] = useState({ confirmed: 0, rejected: 0, no_response: 0 });
+  const [preset, setPreset] = useState<DatePreset>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
   const fetchOrders = async () => {
     setRefreshing(true);
-    const [{ data, error }, confirmedRes, rejectedRes, noRespRes] = await Promise.all([
-      supabase
+
+    // Resolve date range (Riyadh-day → ISO bounds)
+    const fromISO = dateFrom ? riyadhDayBoundsISO(dateFrom, false) : null;
+    const toISO = dateTo ? riyadhDayBoundsISO(dateTo, true) : null;
+
+    let listQ = supabase
       .from("orders")
       .select("id, order_number, customer_name, customer_phone, city, total, status, created_at, confirmed_at, confirmation_response")
       .eq("confirmation_response", "confirmed")
       .order("confirmed_at", { ascending: false, nullsFirst: false })
-      .limit(500),
-      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "confirmed"),
-      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "rejected"),
-      supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", "no_response"),
+      .limit(500);
+    if (fromISO) listQ = listQ.gte("confirmed_at", fromISO);
+    if (toISO) listQ = listQ.lte("confirmed_at", toISO);
+
+    const buildCount = (resp: string) => {
+      // Use created_at for "no_response" (no confirmed_at), confirmed_at otherwise.
+      const dateCol = resp === "confirmed" || resp === "rejected" ? "confirmed_at" : "created_at";
+      let q = supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", resp);
+      if (fromISO) q = q.gte(dateCol, fromISO);
+      if (toISO) q = q.lte(dateCol, toISO);
+      return q;
+    };
+
+    const [{ data, error }, confirmedRes, rejectedRes, noRespRes] = await Promise.all([
+      listQ,
+      buildCount("confirmed"),
+      buildCount("rejected"),
+      buildCount("no_response"),
     ]);
     if (!error && data) setOrders(data as any);
     setResponseStats({
@@ -76,7 +124,19 @@ export default function AdminConfirmedOrders() {
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateFrom, dateTo]);
+
+  const applyPreset = (p: DatePreset) => {
+    setPreset(p);
+    if (p === "all") { setDateFrom(""); setDateTo(""); return; }
+    if (p === "today") {
+      const t = todayInRiyadh();
+      setDateFrom(t); setDateTo(t); return;
+    }
+    if (p === "7d") { setDateFrom(addDaysRiyadh(-6)); setDateTo(todayInRiyadh()); return; }
+    if (p === "30d") { setDateFrom(addDaysRiyadh(-29)); setDateTo(todayInRiyadh()); return; }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
