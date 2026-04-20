@@ -272,6 +272,60 @@ export default function AdminConfirmedOrders() {
         </motion.div>
       </div>
 
+      {/* Date filter */}
+      <div className="mb-4 bg-card rounded-2xl border border-border p-4 shadow-sm">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          {([
+            { k: "all", label: "الكل" },
+            { k: "today", label: "اليوم" },
+            { k: "7d", label: "آخر 7 أيام" },
+            { k: "30d", label: "آخر 30 يوم" },
+          ] as { k: DatePreset; label: string }[]).map((p) => (
+            <Button
+              key={p.k}
+              size="sm"
+              variant={preset === p.k ? "default" : "outline"}
+              onClick={() => applyPreset(p.k)}
+              className="h-8 text-xs"
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-muted-foreground">من تاريخ</label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => { setDateFrom(e.target.value); setPreset("custom"); }}
+              className="h-9 w-[160px]"
+              dir="ltr"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-[11px] text-muted-foreground">إلى تاريخ</label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => { setDateTo(e.target.value); setPreset("custom"); }}
+              className="h-9 w-[160px]"
+              dir="ltr"
+            />
+          </div>
+          {(dateFrom || dateTo) && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => applyPreset("all")}
+              className="h-9 text-xs text-muted-foreground"
+            >
+              مسح الفلتر
+            </Button>
+          )}
+        </div>
+      </div>
+
       {/* Search */}
       <div className="mb-4 relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
