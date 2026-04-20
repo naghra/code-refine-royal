@@ -80,6 +80,38 @@ const ConfirmOrder = () => {
   const [showReadyModal, setShowReadyModal] = useState(true);
   const [showNoWarning, setShowNoWarning] = useState(false);
 
+  // Lock body scroll while the ready-to-receive modal is open so the
+  // backdrop doesn't shift/repaint when the user tries to scroll on mobile.
+  useEffect(() => {
+    const shouldLock = showReadyModal && step === 0 && !softExitId;
+    if (!shouldLock) return;
+    const { body, documentElement: html } = document;
+    const scrollY = window.scrollY;
+    const prev = {
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      bodyOverflow: body.style.overflow,
+      htmlOverflow: html.style.overflow,
+      htmlOverscroll: (html.style as any).overscrollBehavior,
+    };
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.overflow = "hidden";
+    html.style.overflow = "hidden";
+    (html.style as any).overscrollBehavior = "none";
+    return () => {
+      body.style.position = prev.bodyPosition;
+      body.style.top = prev.bodyTop;
+      body.style.width = prev.bodyWidth;
+      body.style.overflow = prev.bodyOverflow;
+      html.style.overflow = prev.htmlOverflow;
+      (html.style as any).overscrollBehavior = prev.htmlOverscroll;
+      window.scrollTo(0, scrollY);
+    };
+  }, [showReadyModal, step, softExitId]);
+
   // Live social proof counters
   const [confirmedToday, setConfirmedToday] = useState(124);
   const [livePulse, setLivePulse] = useState(0);
