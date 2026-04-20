@@ -524,10 +524,34 @@ const ConfirmOrder = () => {
           </ul>
         </motion.div>
 
-        {/* ===== Step 4: Smart Filtering Questions ===== */}
-        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 min-h-[220px]">
+        {/* ===== Smart Filtering Funnel ===== */}
+        <div className="rounded-3xl border border-white/10 bg-white/[0.04] backdrop-blur-xl p-5 min-h-[260px]">
           <AnimatePresence mode="wait">
-            {step < QUESTIONS.length && (
+            {/* Soft exit on Step 1 "No" — saved as warm lead */}
+            {softExitId && (
+              <motion.div
+                key="soft-exit"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center space-y-4 py-2"
+              >
+                <div className="w-16 h-16 mx-auto rounded-full bg-[#b38a2e]/15 border border-[#b38a2e]/30 flex items-center justify-center">
+                  <Lock className="w-8 h-8 text-[#d4a84a]" />
+                </div>
+                <h3 className="text-lg font-bold text-white">🔒 يمكنك الاحتفاظ بطلبك وتأكيده لاحقاً</h3>
+                <p className="text-sm text-white/70 leading-relaxed">
+                  حجزنا لك المنتج + الهدية المجانية ليوم كامل. ارجع متى ما كنت جاهزًا للاستلام.
+                </p>
+                <button
+                  onClick={() => navigate("/")}
+                  className="w-full h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-semibold border border-white/15 transition-all"
+                >
+                  استكشاف منتجات أخرى
+                </button>
+              </motion.div>
+            )}
+
+            {!softExitId && step < QUESTIONS.length && (
               <motion.div
                 key={`q-${step}`}
                 initial={{ opacity: 0, x: 30 }}
@@ -541,6 +565,7 @@ const ConfirmOrder = () => {
                   <p className="text-base md:text-lg font-bold text-white leading-relaxed">
                     {QUESTIONS[step].q}
                   </p>
+                  <p className="text-[11px] text-white/50">{QUESTIONS[step].hint}</p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -573,32 +598,55 @@ const ConfirmOrder = () => {
               </motion.div>
             )}
 
-            {/* Disqualified – warm lead path (no negative tone) */}
-            {step >= 3 && disqualified && (
+            {/* Evaluating animation */}
+            {!softExitId && step === 3 && evaluating && (
               <motion.div
-                key="warm"
+                key="evaluating"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="text-center space-y-4 py-6"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ repeat: Infinity, duration: 1.4, ease: "linear" }}
+                  className="w-16 h-16 mx-auto rounded-full border-2 border-[#b38a2e]/30 border-t-[#d4a84a] flex items-center justify-center"
+                >
+                  <Sparkles className="w-6 h-6 text-[#d4a84a]" />
+                </motion.div>
+                <h3 className="text-base font-bold text-white">🔄 جاري تقييم طلبك...</h3>
+                <p className="text-xs text-white/60">نتحقق من أهلية طلبك للشحن السريع</p>
+              </motion.div>
+            )}
+
+            {/* Low quality result – warm lead saved, NOT sent to call center */}
+            {!softExitId && step >= 4 && !qualified && (
+              <motion.div
+                key="low-quality"
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center space-y-4 py-2"
               >
-                <div className="w-16 h-16 mx-auto rounded-full bg-[#b38a2e]/15 border border-[#b38a2e]/30 flex items-center justify-center">
-                  <Sparkles className="w-8 h-8 text-[#d4a84a]" />
+                <div className="w-16 h-16 mx-auto rounded-full bg-amber-500/15 border border-amber-400/30 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-amber-300" />
                 </div>
-                <h3 className="text-lg font-bold text-white">سنحتفظ لك بالعرض ✨</h3>
+                <h3 className="text-lg font-bold text-white">⚠️ حالياً الطلب غير مؤهل للشحن السريع</h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  سنحجز لك المنتج + الهدية المجانية ليوم كامل. ارجع متى ما كنت جاهزًا للاستلام.
+                  لا تقلق — حجزنا لك المنتج. راجعنا لاحقًا متى ما كنت جاهزًا تمامًا للاستلام.
                 </p>
+                <div className="text-[11px] text-white/40">نتيجة التقييم: {score}/100</div>
                 <button
                   onClick={() => navigate("/")}
-                  className="w-full h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-semibold border border-white/15 transition-all"
+                  className="w-full h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-white font-semibold border border-white/15 transition-all flex items-center justify-center gap-2"
                 >
-                  استكشاف منتجات أخرى
+                  <Lock className="w-4 h-4" />
+                  🔒 احتفظ بالطلب وراجع لاحقاً
                 </button>
               </motion.div>
             )}
 
-            {/* Step 5: Final CTA – qualified */}
-            {step >= 3 && allYes && (
+            {/* High quality result – qualified, show CTA */}
+            {!softExitId && step >= 4 && qualified && (
               <motion.div
                 key="cta"
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -615,9 +663,11 @@ const ConfirmOrder = () => {
                     <ShieldCheck className="w-8 h-8 text-white" />
                   </motion.div>
                   <h3 className="text-lg font-bold text-white">
-                    أنت ضمن العملاء المميزين 🌟
+                    🎉 طلبك مؤهل للشحن السريع
                   </h3>
-                  <p className="text-xs text-white/60">اضغط لحجز أولوية الشحن الآن</p>
+                  <p className="text-xs text-emerald-300 font-semibold">
+                    🟢 نتيجة التقييم: {score}/100
+                  </p>
                 </div>
 
                 {error && (
