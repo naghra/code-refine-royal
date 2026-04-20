@@ -110,6 +110,27 @@ export default function AdminConfirmedOrders() {
   const [preset, setPreset] = useState<DatePreset>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [sending, setSending] = useState(false);
+  const [codSettings, setCodSettings] = useState<{ enabled: boolean; api_token: string; default_country: string; default_city: string } | null>(null);
+  const [detailsOrder, setDetailsOrder] = useState<ConfirmedOrder | null>(null);
+  const [detailsItems, setDetailsItems] = useState<OrderItem[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Load CodNetwork settings
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase
+        .from("store_settings")
+        .select("value")
+        .eq("key", "cod_network")
+        .maybeSingle();
+      if (data?.value) {
+        const v = data.value as any;
+        if (v.enabled && v.api_token) setCodSettings(v);
+      }
+    })();
+  }, []);
 
   const fetchOrders = async () => {
     setRefreshing(true);
@@ -120,7 +141,7 @@ export default function AdminConfirmedOrders() {
 
     let listQ = supabase
       .from("orders")
-      .select("id, order_number, customer_name, customer_phone, city, total, status, created_at, confirmed_at, confirmation_response")
+      .select("id, order_number, customer_name, customer_phone, city, address, total, subtotal, shipping_cost, status, created_at, confirmed_at, confirmation_response, lead_score, lead_quality, gift_name, gift_sku, notes, cod_network_status, cod_network_lead_id")
       .eq("confirmation_response", "confirmed")
       .order("confirmed_at", { ascending: false, nullsFirst: false })
       .limit(500);
