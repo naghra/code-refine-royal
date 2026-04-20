@@ -325,8 +325,9 @@ const ConfirmOrder = () => {
         setSoftExitId("ready");
         if (pending?.order_id && !recordedRef.current.done) {
           recordedRef.current.done = true;
+          const partialScore = computePartialScore(next);
           recordResponse(pending.order_id, "rejected", {
-            lead_score: 0,
+            lead_score: partialScore,
             lead_quality: "warm_lead",
           });
         }
