@@ -152,6 +152,8 @@ export type Database = {
           ip_address: string | null
           ip_city: string | null
           ip_country: string | null
+          lead_quality: string | null
+          lead_score: number | null
           notes: string | null
           order_number: number
           payment_method: Database["public"]["Enums"]["payment_method"]
@@ -183,6 +185,8 @@ export type Database = {
           ip_address?: string | null
           ip_city?: string | null
           ip_country?: string | null
+          lead_quality?: string | null
+          lead_score?: number | null
           notes?: string | null
           order_number?: number
           payment_method?: Database["public"]["Enums"]["payment_method"]
@@ -214,6 +218,8 @@ export type Database = {
           ip_address?: string | null
           ip_city?: string | null
           ip_country?: string | null
+          lead_quality?: string | null
+          lead_score?: number | null
           notes?: string | null
           order_number?: number
           payment_method?: Database["public"]["Enums"]["payment_method"]
