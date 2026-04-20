@@ -591,6 +591,51 @@ export default function AdminConfirmedOrders() {
         </Popover>
       </div>
 
+      {/* Bulk action bar */}
+      <AnimatePresence>
+        {selectedIds.size > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-3"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              <Badge variant="default" className="rounded-full">
+                {selectedIds.size}
+              </Badge>
+              <span className="text-foreground font-medium">طلب محدد</span>
+              <button
+                onClick={() => setSelectedIds(new Set())}
+                className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> إلغاء التحديد
+              </button>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2"
+                onClick={() => exportCSV(orders.filter((o) => selectedIds.has(o.id)))}
+              >
+                <Download className="w-4 h-4" /> تصدير المحدد
+              </Button>
+              <Button
+                size="sm"
+                className="gap-2 bg-gradient-to-l from-emerald-600 to-teal-600 text-white hover:opacity-90"
+                disabled={sending || !codSettings}
+                onClick={sendSelectedToCodNetwork}
+                title={!codSettings ? "فعّل CodNetwork من الإعدادات" : ""}
+              >
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                إرسال إلى CodNetwork
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Table */}
       <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
         {loading ? (
