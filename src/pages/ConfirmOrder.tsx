@@ -985,6 +985,7 @@ const ConfirmOrder = () => {
               </motion.div>
             )}
           </AnimatePresence>
+          </div>
 
           {/* Back button between questions */}
           {step > 0 && step < QUESTIONS.length && (
@@ -997,6 +998,32 @@ const ConfirmOrder = () => {
             </button>
           )}
         </div>
+
+        {/* ===== Exclusive Qualification Banner (moved below questions) ===== */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="rounded-2xl bg-gradient-to-br from-[#b38a2e]/10 to-emerald-500/5 border border-[#b38a2e]/20 p-4"
+        >
+          <p className="text-sm font-bold text-[#d4a84a] flex items-center gap-2 mb-2">
+            🎁 فقط الطلبات المؤهلة تحصل على:
+          </p>
+          <ul className="space-y-1.5 text-xs text-white/80">
+            <li className="flex items-center gap-2">
+              <Truck className="w-3.5 h-3.5 text-emerald-300" />
+              أولوية الشحن السريع
+            </li>
+            <li className="flex items-center gap-2">
+              <Zap className="w-3.5 h-3.5 text-amber-300" />
+              تجهيز سريع خلال ساعات
+            </li>
+            <li className="flex items-center gap-2">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+              ضمان توفر المنتج
+            </li>
+          </ul>
+        </motion.div>
 
         {/* Trust footer */}
         <p className="text-center text-[10px] text-white/30 leading-relaxed pt-2">
