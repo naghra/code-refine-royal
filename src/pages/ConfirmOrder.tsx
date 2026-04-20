@@ -438,7 +438,7 @@ const ConfirmOrder = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="relative w-full max-w-md rounded-3xl border border-[#b38a2e]/25 bg-gradient-to-br from-[#10131a] via-[#0e1118] to-[#0b0d12] p-6 md:p-7 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] max-h-[92vh] overflow-y-auto"
+              className="relative w-full max-w-md rounded-3xl border border-[#b38a2e]/25 bg-gradient-to-br from-[#10131a] via-[#0e1118] to-[#0b0d12] p-5 md:p-7 shadow-[0_30px_80px_-20px_rgba(0,0,0,0.7)] overflow-hidden overscroll-none touch-none"
             >
               {/* Glow accents */}
               <div className="pointer-events-none absolute -top-24 -right-24 w-64 h-64 rounded-full bg-emerald-500/15 blur-3xl" />
