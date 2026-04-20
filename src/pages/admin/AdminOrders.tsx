@@ -54,6 +54,7 @@ type Order = {
   gift_sku: string | null;
   gift_name: string | null;
   gift_selected_at: string | null;
+  confirmation_response: string | null;
 };
 
 type OrderItem = {
