@@ -245,7 +245,19 @@ const ConfirmOrder = () => {
           lead_quality: "high_intent",
         },
       });
-      if (fnErr) throw fnErr;
+      // supabase.functions.invoke throws FunctionsHttpError on non-2xx
+      // and exposes the response on err.context. Try to parse it.
+      if (fnErr) {
+        let errMsg = (fnErr as any)?.message || "Confirmation failed";
+        try {
+          const ctx: Response | undefined = (fnErr as any)?.context;
+          if (ctx && typeof ctx.json === "function") {
+            const body = await ctx.clone().json().catch(() => null);
+            if (body?.error) errMsg = String(body.error);
+          }
+        } catch {}
+        throw new Error(errMsg);
+      }
       if (!data?.success) throw new Error(data?.error || "Confirmation failed");
       recordedRef.current.done = true;
       sessionStorage.removeItem("pending_order");
@@ -260,7 +272,8 @@ const ConfirmOrder = () => {
     } catch (err) {
       console.error("Confirm order failed:", err);
       const msg = err instanceof Error ? err.message : String(err);
-      if (msg.toLowerCase().includes("not found")) {
+      const lower = msg.toLowerCase();
+      if (lower.includes("not found") || lower.includes("404")) {
         sessionStorage.removeItem("pending_order");
         setError("انتهت صلاحية هذا الطلب. الرجاء إعادة الطلب من صفحة المنتج.");
       } else {
