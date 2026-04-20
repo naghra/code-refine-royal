@@ -782,17 +782,38 @@ const ConfirmOrder = () => {
         </div>
 
         {/* ===== Smart Filtering Funnel (highlighted, moved above benefits) ===== */}
-        <div className="relative rounded-3xl border-2 border-[#b38a2e]/50 bg-gradient-to-br from-[#1a1d27] via-[#13161e] to-[#0e1118] p-5 md:p-6 min-h-[280px] shadow-[0_25px_60px_-15px_rgba(179,138,46,0.35)] ring-1 ring-[#d4a84a]/20">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="relative p-[2px] rounded-3xl animate-glow-border shadow-[0_25px_70px_-15px_rgba(179,138,46,0.55)]"
+        >
+        {/* Focus dim overlay — softly isolates this section */}
+        {!softExitId && step < QUESTIONS.length && (
+          <div className="pointer-events-none fixed inset-0 bg-black/15 z-[-1]" aria-hidden="true" />
+        )}
+        <div className="relative rounded-[22px] bg-gradient-to-br from-[#1a1d27] via-[#13161e] to-[#0e1118] p-5 md:p-6 min-h-[280px] overflow-hidden">
           {/* Glow accents to draw attention */}
           <div className="pointer-events-none absolute -top-16 -right-10 w-48 h-48 rounded-full bg-[#b38a2e]/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-10 w-48 h-48 rounded-full bg-emerald-500/15 blur-3xl" />
 
+          {/* Moving progress line under the section header */}
+          {!softExitId && step < QUESTIONS.length && (
+            <div className="absolute top-0 inset-x-0 h-[3px] overflow-hidden rounded-t-[22px]">
+              <div className="h-full w-1/3 bg-gradient-to-r from-transparent via-[#f5c66b] to-transparent animate-progress-slide" />
+            </div>
+          )}
+
           {/* Section label */}
           {!softExitId && step < QUESTIONS.length && (
-            <div className="relative flex items-center justify-center mb-4">
+            <div className="relative flex flex-col items-center gap-2 mb-4">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#b38a2e]/20 border border-[#b38a2e]/40 text-[#d4a84a] text-[11px] font-bold uppercase tracking-wide">
                 <Sparkles className="w-3 h-3" />
                 تحقق سريع من الأهلية
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-200 text-[11px] font-semibold text-center leading-snug">
+                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                <span>⚠️ أكّد الآن لتأمين طلبك — الطلبات غير المؤكدة قد تُلغى</span>
               </div>
             </div>
           )}
