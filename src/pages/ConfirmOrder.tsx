@@ -77,6 +77,8 @@ const ConfirmOrder = () => {
   const [evaluating, setEvaluating] = useState(false);
   const [score, setScore] = useState(0);
   const [softExitId, setSoftExitId] = useState<QId | null>(null);
+  const [showReadyModal, setShowReadyModal] = useState(true);
+  const [showNoWarning, setShowNoWarning] = useState(false);
 
   // Live social proof counters
   const [confirmedToday, setConfirmedToday] = useState(124);
