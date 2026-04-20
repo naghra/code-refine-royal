@@ -73,6 +73,13 @@ serve(async (req) => {
     if (hasExternalSync) {
       const extUrl = cfg.supabase_url.replace(/\/$/, "");
       const extKey = cfg.supabase_service_role_key;
+      // External DB may not have lead_score/lead_quality columns — send only confirmation fields
+      const externalPayload: Record<string, unknown> = {
+        confirmation_response: updatePayload.confirmation_response,
+        confirmed: updatePayload.confirmed,
+      };
+      if (updatePayload.confirmed_at) externalPayload.confirmed_at = updatePayload.confirmed_at;
+
       const res = await fetch(`${extUrl}/rest/v1/orders?id=eq.${order_id}`, {
         method: "PATCH",
         headers: {
@@ -81,7 +88,7 @@ serve(async (req) => {
           Authorization: `Bearer ${extKey}`,
           Prefer: "return=representation",
         },
-        body: JSON.stringify(updatePayload),
+        body: JSON.stringify(externalPayload),
       });
       if (res.ok) {
         externalUpdated = true;
@@ -89,9 +96,15 @@ serve(async (req) => {
         const externalOrder = Array.isArray(rows) ? rows[0] : null;
 
         if (externalOrder) {
+          // Merge lead scoring fields locally (external DB doesn't store them)
+          const localOrderRow = {
+            ...externalOrder,
+            lead_score: updatePayload.lead_score ?? externalOrder.lead_score ?? null,
+            lead_quality: updatePayload.lead_quality ?? externalOrder.lead_quality ?? null,
+          };
           const { error: mirrorErr } = await supabaseAdmin
             .from("orders")
-            .upsert(externalOrder, { onConflict: "id" });
+            .upsert(localOrderRow, { onConflict: "id" });
 
           if (mirrorErr) {
             console.error("Local mirror upsert error:", mirrorErr);
