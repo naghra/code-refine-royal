@@ -13,6 +13,19 @@ const CURRENCY_COUNTRY_MAP: Record<string, string> = {
   OMR: "OMN", EGP: "EGY", USD: "USA", EUR: "DEU", GBP: "GBR",
 };
 
+const waitUntil = (promise: Promise<unknown>) => {
+  const runtime = globalThis as typeof globalThis & {
+    EdgeRuntime?: { waitUntil: (promise: Promise<unknown>) => void };
+  };
+
+  if (runtime.EdgeRuntime?.waitUntil) {
+    runtime.EdgeRuntime.waitUntil(promise);
+    return;
+  }
+
+  promise.catch((error) => console.error("Background task failed:", error));
+};
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -212,7 +225,7 @@ serve(async (req) => {
       }
     }
 
-    EdgeRuntime.waitUntil((async () => {
+    waitUntil((async () => {
       // Pushover notification
       try {
         const PUSHOVER_TOKEN = Deno.env.get("PUSHOVER_TOKEN");
