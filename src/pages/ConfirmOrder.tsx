@@ -988,7 +988,7 @@ const ConfirmOrder = () => {
             )}
 
             {/* High quality result – qualified, show CTA */}
-            {!softExitId && step >= 4 && qualified && (
+            {!softExitId && step >= 5 && qualified && (
               <motion.div
                 key="cta"
                 initial={{ opacity: 0, scale: 0.95 }}
