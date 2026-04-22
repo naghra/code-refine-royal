@@ -344,7 +344,8 @@ const ConfirmOrder = () => {
       if (step < QUESTIONS.length - 1) {
         setStep((s) => s + 1);
       } else {
-        finalizeFunnel(next);
+        // Show phone confirmation step before evaluating
+        setStep(3);
       }
     }, 240);
   };
