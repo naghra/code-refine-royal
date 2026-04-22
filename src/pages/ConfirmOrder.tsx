@@ -962,7 +962,7 @@ const ConfirmOrder = () => {
             )}
 
             {/* Low quality result – warm lead saved, NOT sent to call center */}
-            {!softExitId && step >= 4 && !qualified && (
+            {!softExitId && step >= 5 && !qualified && (
               <motion.div
                 key="low-quality"
                 initial={{ opacity: 0, y: 10 }}
