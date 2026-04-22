@@ -757,9 +757,25 @@ export default function AdminOrders() {
     toast({ title: "تم حفظ الملاحظات" });
   };
 
-  const exportCSV = (ordersList?: Order[]) => {
+  const exportCSV = async (ordersList?: Order[]) => {
     const target = ordersList || filtered;
-    const headers = ["رقم الطلب", "العميل", "الجوال", "الموقع", "IP", "المجموع", "الحالة", "الدفع", "الهدية", "تقييم الليد", "نقاط الليد", "التاريخ"];
+    const headers = ["رقم الطلب", "العميل", "الجوال", "الموقع", "IP", "المجموع", "الكمية", "الحالة", "الدفع", "الهدية", "تقييم الليد", "نقاط الليد", "التاريخ"];
+    // Fetch quantities for all target orders in one query
+    const qtyMap: Record<string, number> = {};
+    const ids = target.map((o) => o.id);
+    if (ids.length) {
+      const CHUNK = 500;
+      for (let i = 0; i < ids.length; i += CHUNK) {
+        const slice = ids.slice(i, i + CHUNK);
+        const { data: items } = await supabase
+          .from("order_items")
+          .select("order_id, quantity")
+          .in("order_id", slice);
+        (items || []).forEach((it: any) => {
+          qtyMap[it.order_id] = (qtyMap[it.order_id] || 0) + Number(it.quantity || 0);
+        });
+      }
+    }
     const qualityLabel = (q: string | null) =>
       q === "high_intent" ? "🟢 High Intent" : q === "warm_lead" ? "🟠 Warm Lead" : "";
     const escape = (v: unknown) => {
@@ -770,7 +786,9 @@ export default function AdminOrders() {
       o.order_number, o.customer_name, o.customer_phone,
       o.ip_city && o.ip_country ? `${o.ip_city} - ${o.ip_country}` : (o.city || ""),
       o.ip_address || "",
-      o.total, STATUS_MAP[o.status]?.label || o.status,
+      o.total,
+      qtyMap[o.id] || 0,
+      STATUS_MAP[o.status]?.label || o.status,
       PAYMENT_MAP[o.payment_method] || o.payment_method,
       o.gift_sku ? `${o.gift_name || ""} (${o.gift_sku})` : "لا توجد هدية",
       qualityLabel(o.lead_quality),
