@@ -103,6 +103,10 @@ const ConfirmOrder = () => {
   // Lock body scroll while the ready-to-receive modal is open so the
   // backdrop doesn't shift/repaint when the user tries to scroll on mobile.
   useEffect(() => {
+    // Only lock while the intro modal is actually visible AND we're still on
+    // the first question. As soon as the user advances (especially to the
+    // phone-confirm step where there's a text input), unlock so iOS doesn't
+    // freeze when focusing the input.
     const shouldLock = showReadyModal && step === 0 && !softExitId;
     if (!shouldLock) return;
     const { body, documentElement: html } = document;
