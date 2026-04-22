@@ -57,6 +57,7 @@ type Order = {
   confirmation_response: string | null;
   lead_score: number | null;
   lead_quality: string | null;
+  phone_status: string | null;
 };
 
 type OrderItem = {
@@ -306,7 +307,17 @@ function OrderCard({ order, index, onStatusChange, onOpen, onDelete, selected, o
 
         {/* Customer */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-foreground truncate">{order.customer_name}</p>
+          <p className="text-sm font-semibold text-foreground truncate inline-flex items-center gap-1">
+            <span className="truncate">{order.customer_name}</span>
+            {order.phone_status === "match" && (
+              <span
+                title="رقم مؤكد مرتين"
+                className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white shrink-0"
+              >
+                <CheckCircle className="w-3 h-3" />
+              </span>
+            )}
+          </p>
           <p className="text-xs text-muted-foreground flex items-center gap-1">
             {order.ip_city && order.ip_country && order.ip_city !== "غير معروف" ? (
               <TooltipProvider>
