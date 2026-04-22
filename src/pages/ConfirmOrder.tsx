@@ -802,12 +802,14 @@ const ConfirmOrder = () => {
             <span>
               {softExitId
                 ? "تم حفظ طلبك"
-                : step >= 4
+                : step >= 5
                 ? qualified
                   ? "🟢 طلبك مؤهل"
                   : "اكتمل التقييم"
-                : step === 3
+                : step === 4
                 ? "🔄 جاري تقييم طلبك..."
+                : step === 3
+                ? "📞 تأكيد رقم الجوال"
                 : `الخطوة ${step + 1} من ${totalSteps}`}
             </span>
             <span className="font-mono">{Math.round(progress)}%</span>
