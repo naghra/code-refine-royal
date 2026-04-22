@@ -361,6 +361,14 @@ const ConfirmOrder = () => {
           response: "confirmed",
           lead_score: score,
           lead_quality: "high_intent",
+          ...(phoneInfo
+            ? {
+                phone_1: phoneInfo.phone_1,
+                phone_2: phoneInfo.phone_2,
+                phone_status: phoneInfo.phone_status,
+                ...(phoneInfo.phone_final ? { phone_final: phoneInfo.phone_final } : {}),
+              }
+            : {}),
         },
       });
       // supabase.functions.invoke throws FunctionsHttpError on non-2xx
