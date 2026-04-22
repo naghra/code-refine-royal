@@ -941,6 +941,86 @@ const ConfirmOrder = () => {
             )}
 
             {/* Evaluating animation */}
+            {/* ===== Phone confirmation step (step 3) ===== */}
+            {!softExitId && step === 3 && pending && (
+              <motion.div
+                key="phone-confirm"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-5"
+              >
+                <div className="text-center space-y-3">
+                  <motion.div
+                    initial={{ scale: 0.6, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ type: "spring", stiffness: 220, damping: 14 }}
+                    className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#b38a2e]/25 to-emerald-500/15 border border-[#d4a84a]/30 flex items-center justify-center text-3xl shadow-lg shadow-[#b38a2e]/20"
+                  >
+                    📞
+                  </motion.div>
+                  <p className="text-lg md:text-xl font-extrabold text-white leading-relaxed">
+                    📞 بقيت خطوة واحدة لتأكيد الطلب
+                  </p>
+                  <p className="text-xs text-white/70 leading-relaxed">
+                    سيتم الاتصال بك لتأكيد الطلب، تأكد من رقمك
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-xs text-white/60 font-semibold">
+                    أدخل رقمك مرة أخرى
+                  </label>
+                  <input
+                    type="tel"
+                    inputMode="numeric"
+                    autoComplete="tel"
+                    value={phone2}
+                    onChange={(e) => {
+                      // Convert Arabic/Persian digits -> English, strip non-digits
+                      const converted = e.target.value
+                        .replace(/[\u0660-\u0669]/g, (d) => String(d.charCodeAt(0) - 0x0660))
+                        .replace(/[\u06F0-\u06F9]/g, (d) => String(d.charCodeAt(0) - 0x06F0))
+                        .replace(/\D/g, "");
+                      setPhone2(converted);
+                    }}
+                    placeholder="05xxxxxxxx"
+                    dir="ltr"
+                    className="w-full h-14 rounded-2xl bg-white/[0.05] border border-white/15 focus:border-[#d4a84a]/60 focus:ring-2 focus:ring-[#d4a84a]/20 text-white text-center font-mono tracking-wider outline-none transition-all"
+                    style={{ fontSize: "16px" }}
+                    maxLength={15}
+                  />
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={phone2.trim().length < 6}
+                  onClick={() => {
+                    const p1 = (pending.customer_phone || "").replace(/\D/g, "");
+                    const p2 = phone2.trim();
+                    const match = p1 === p2;
+                    setPhoneInfo({
+                      phone_1: pending.customer_phone,
+                      phone_2: p2,
+                      phone_status: match ? "match" : "mismatch",
+                      ...(match ? { phone_final: pending.customer_phone } : {}),
+                    });
+                    finalizeFunnel(answers);
+                  }}
+                  className="w-full h-14 rounded-2xl font-extrabold text-base text-white bg-gradient-to-r from-emerald-500 via-emerald-400 to-emerald-500 shadow-[0_15px_35px_-10px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  ✅ متابعة
+                </motion.button>
+
+                <p className="text-center text-[11px] text-white/40 leading-relaxed">
+                  🔒 رقمك آمن ولن يستخدم إلا للتواصل بشأن طلبك
+                </p>
+              </motion.div>
+            )}
+
+            {/* Evaluating animation */}
             {!softExitId && step === 4 && evaluating && (
               <motion.div
                 key="evaluating"
