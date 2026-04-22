@@ -61,7 +61,7 @@ const ConfirmOrder = () => {
   const cs = currency.symbol;
 
   const [pending, setPending] = useState<PendingOrder | null>(null);
-  const [step, setStep] = useState(0); // 0..2 questions, 3 = evaluating, 4 = result
+  const [step, setStep] = useState(0); // 0..2 questions, 3 = phone confirm, 4 = evaluating, 5 = result
   const [answers, setAnswers] = useState<Record<string, Answer>>({
     ready: null,
     cash: null,
@@ -80,6 +80,13 @@ const ConfirmOrder = () => {
   const [showReadyModal, setShowReadyModal] = useState(true);
   const [showNoWarning, setShowNoWarning] = useState(false);
   const [idleShake, setIdleShake] = useState(false);
+  const [phone2, setPhone2] = useState("");
+  const [phoneInfo, setPhoneInfo] = useState<{
+    phone_1: string;
+    phone_2: string;
+    phone_status: "match" | "mismatch";
+    phone_final?: string;
+  } | null>(null);
 
   // Trigger micro-shake on the answer buttons after 5s of inactivity per question
   useEffect(() => {
