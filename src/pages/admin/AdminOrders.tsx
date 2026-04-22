@@ -759,7 +759,13 @@ export default function AdminOrders() {
 
   const exportCSV = (ordersList?: Order[]) => {
     const target = ordersList || filtered;
-    const headers = ["رقم الطلب", "العميل", "الجوال", "الموقع", "IP", "المجموع", "الحالة", "الدفع", "الهدية", "التاريخ"];
+    const headers = ["رقم الطلب", "العميل", "الجوال", "الموقع", "IP", "المجموع", "الحالة", "الدفع", "الهدية", "تقييم الليد", "نقاط الليد", "التاريخ"];
+    const qualityLabel = (q: string | null) =>
+      q === "high_intent" ? "🟢 High Intent" : q === "warm_lead" ? "🟠 Warm Lead" : "";
+    const escape = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
     const rows = target.map((o) => [
       o.order_number, o.customer_name, o.customer_phone,
       o.ip_city && o.ip_country ? `${o.ip_city} - ${o.ip_country}` : (o.city || ""),
@@ -767,9 +773,11 @@ export default function AdminOrders() {
       o.total, STATUS_MAP[o.status]?.label || o.status,
       PAYMENT_MAP[o.payment_method] || o.payment_method,
       o.gift_sku ? `${o.gift_name || ""} (${o.gift_sku})` : "لا توجد هدية",
+      qualityLabel(o.lead_quality),
+      o.lead_score != null ? `${o.lead_score}/100` : "",
       new Date(o.created_at).toLocaleDateString("en-US"),
     ]);
-    const csv = "\uFEFF" + [headers, ...rows].map((r) => r.join(",")).join("\n");
+    const csv = "\uFEFF" + [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
