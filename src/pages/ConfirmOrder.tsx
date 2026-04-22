@@ -941,7 +941,7 @@ const ConfirmOrder = () => {
             )}
 
             {/* Evaluating animation */}
-            {!softExitId && step === 3 && evaluating && (
+            {!softExitId && step === 4 && evaluating && (
               <motion.div
                 key="evaluating"
                 initial={{ opacity: 0 }}
