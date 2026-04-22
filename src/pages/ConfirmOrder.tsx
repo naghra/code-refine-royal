@@ -833,7 +833,7 @@ const ConfirmOrder = () => {
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative p-[2px] rounded-3xl animate-glow-border shadow-[0_25px_70px_-15px_rgba(179,138,46,0.55)]"
+          className={`relative p-[2px] rounded-3xl shadow-[0_25px_70px_-15px_rgba(179,138,46,0.55)] ${step === 3 ? "" : "animate-glow-border"}`}
         >
         {/* Focus dim overlay — softly isolates this section */}
         {!softExitId && step < QUESTIONS.length && (
