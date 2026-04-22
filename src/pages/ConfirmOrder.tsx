@@ -839,7 +839,7 @@ const ConfirmOrder = () => {
         {!softExitId && step < QUESTIONS.length && (
           <div className="pointer-events-none fixed inset-0 bg-black/15 z-[-1]" aria-hidden="true" />
         )}
-        <div className="relative rounded-[22px] bg-gradient-to-br from-[#1a1d27] via-[#13161e] to-[#0e1118] p-5 md:p-6 min-h-[280px] overflow-hidden">
+        <div className="relative rounded-[22px] bg-gradient-to-br from-[#1a1d27] via-[#13161e] to-[#0e1118] p-5 md:p-6 min-h-[280px] overflow-hidden" style={{ transform: "translateZ(0)" }}>
           {/* Glow accents to draw attention */}
           <div className="pointer-events-none absolute -top-16 -right-10 w-48 h-48 rounded-full bg-[#b38a2e]/20 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -left-10 w-48 h-48 rounded-full bg-emerald-500/15 blur-3xl" />
