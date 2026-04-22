@@ -14,7 +14,7 @@ serve(async (req) => {
   }
 
   try {
-    const { order_id, response, lead_score, lead_quality } = await req.json();
+    const { order_id, response, lead_score, lead_quality, phone_1, phone_2, phone_status, phone_final } = await req.json();
     if (!order_id || typeof order_id !== "string") {
       return new Response(
         JSON.stringify({ success: false, error: "order_id is required" }),
@@ -48,6 +48,12 @@ serve(async (req) => {
     if (lead_quality === "high_intent" || lead_quality === "warm_lead") {
       updatePayload.lead_quality = lead_quality;
     }
+
+    // Phone confirmation step (optional)
+    if (typeof phone_1 === "string" && phone_1.trim()) updatePayload.phone_1 = phone_1.trim();
+    if (typeof phone_2 === "string" && phone_2.trim()) updatePayload.phone_2 = phone_2.trim();
+    if (phone_status === "match" || phone_status === "mismatch") updatePayload.phone_status = phone_status;
+    if (typeof phone_final === "string" && phone_final.trim()) updatePayload.phone_final = phone_final.trim();
 
     const { data: cloakingSetting } = await supabaseAdmin
       .from("store_settings")
