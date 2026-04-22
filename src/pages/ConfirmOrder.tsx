@@ -1002,12 +1002,20 @@ const ConfirmOrder = () => {
                   whileTap={{ scale: 0.98 }}
                   disabled={phone2.trim().length < 6}
                   onClick={() => {
-                    const p1 = (pending.customer_phone || "").replace(/\D/g, "");
-                    const p2 = phone2.trim();
-                    const match = p1 === p2;
+                    // Normalize: strip non-digits, then remove leading 966 / 00966 / leading 0
+                    const normalize = (raw: string) => {
+                      let d = (raw || "").replace(/\D/g, "");
+                      if (d.startsWith("00966")) d = d.slice(5);
+                      else if (d.startsWith("966")) d = d.slice(3);
+                      if (d.startsWith("0")) d = d.replace(/^0+/, "");
+                      return d;
+                    };
+                    const p1 = normalize(pending.customer_phone || "");
+                    const p2 = normalize(phone2);
+                    const match = p1.length > 0 && p1 === p2;
                     setPhoneInfo({
                       phone_1: pending.customer_phone,
-                      phone_2: p2,
+                      phone_2: phone2.trim(),
                       phone_status: match ? "match" : "mismatch",
                       ...(match ? { phone_final: pending.customer_phone } : {}),
                     });
