@@ -496,14 +496,16 @@ const ConfirmOrder = () => {
 
   if (!pending) return null;
 
-  // Progress indicator: percent across the funnel (questions + evaluation + result)
-  const totalSteps = QUESTIONS.length + 1; // +1 for result
+  // Progress indicator: percent across the funnel (questions + phone + evaluation + result)
+  const totalSteps = QUESTIONS.length + 2; // +1 phone confirm, +1 result
   const progress = softExitId
     ? 100
-    : step >= 4
+    : step >= 5
     ? 100
+    : step === 4
+    ? 95
     : step === 3
-    ? 90
+    ? ((QUESTIONS.length + 1) / totalSteps) * 100
     : ((step + 1) / totalSteps) * 100;
 
   return (
