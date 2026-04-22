@@ -39,6 +39,7 @@ type ConfirmedOrder = {
   notes: string | null;
   cod_network_status: string | null;
   cod_network_lead_id: string | null;
+  phone_status: string | null;
 };
 
 type OrderItem = {
@@ -141,7 +142,7 @@ export default function AdminConfirmedOrders() {
 
     let listQ = supabase
       .from("orders")
-      .select("id, order_number, customer_name, customer_phone, city, address, total, subtotal, shipping_cost, status, created_at, confirmed_at, confirmation_response, lead_score, lead_quality, gift_name, gift_sku, notes, cod_network_status, cod_network_lead_id")
+      .select("id, order_number, customer_name, customer_phone, city, address, total, subtotal, shipping_cost, status, created_at, confirmed_at, confirmation_response, lead_score, lead_quality, gift_name, gift_sku, notes, cod_network_status, cod_network_lead_id, phone_status")
       .eq("confirmation_response", "confirmed")
       .order("confirmed_at", { ascending: false, nullsFirst: false })
       .limit(500);
@@ -690,7 +691,19 @@ export default function AdminConfirmedOrders() {
                       />
                     </TableCell>
                     <TableCell className="font-mono text-xs">#{o.order_number}</TableCell>
-                    <TableCell className="font-semibold">{o.customer_name}</TableCell>
+                    <TableCell className="font-semibold">
+                      <span className="inline-flex items-center gap-1">
+                        {o.customer_name}
+                        {o.phone_status === "match" && (
+                          <span
+                            title="رقم مؤكد مرتين"
+                            className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-sky-500 text-white shrink-0"
+                          >
+                            <CheckCircle2 className="w-3 h-3" />
+                          </span>
+                        )}
+                      </span>
+                    </TableCell>
                     <TableCell>
                       <a
                         href={`tel:${o.customer_phone}`}
@@ -799,7 +812,18 @@ export default function AdminConfirmedOrders() {
               {/* Customer */}
               <section className="rounded-xl border border-border bg-muted/30 p-4 space-y-2">
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase">بيانات العميل</h4>
-                <div className="text-sm font-bold text-foreground">{detailsOrder.customer_name}</div>
+                <div className="text-sm font-bold text-foreground inline-flex items-center gap-1.5">
+                  {detailsOrder.customer_name}
+                  {detailsOrder.phone_status === "match" && (
+                    <span
+                      title="رقم مؤكد مرتين"
+                      className="inline-flex items-center gap-1 text-[10px] font-semibold bg-sky-500/10 text-sky-600 border border-sky-500/30 px-1.5 py-0.5 rounded-full"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      مؤكد
+                    </span>
+                  )}
+                </div>
                 <a
                   href={`tel:${detailsOrder.customer_phone}`}
                   className="flex items-center gap-2 text-sm text-foreground hover:text-primary"
