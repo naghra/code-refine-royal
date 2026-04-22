@@ -307,11 +307,11 @@ const ConfirmOrder = () => {
     const s = computeScore(finalAnswers, fast);
     setScore(s);
     setEvaluating(true);
-    setStep(3);
+    setStep(4);
     // Brief evaluation animation
     setTimeout(() => {
       setEvaluating(false);
-      setStep(4);
+      setStep(5);
       // If not qualified, mark warm lead immediately (do NOT send to call center)
       if (s < QUALIFY_THRESHOLD && pending?.order_id && !recordedRef.current.done) {
         recordedRef.current.done = true;
