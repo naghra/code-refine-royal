@@ -363,7 +363,7 @@ const ConfirmOrder = () => {
         body: {
           order_id: pending.order_id,
           response: "confirmed",
-          lead_score: score,
+          lead_score: phoneInfo?.phone_status === "match" ? 100 : score,
           lead_quality: "high_intent",
           ...(phoneInfo
             ? {
