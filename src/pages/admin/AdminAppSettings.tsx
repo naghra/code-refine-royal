@@ -274,13 +274,25 @@ export default function AdminAppSettings() {
 
   const handleSave = async () => {
     setSaving(true);
+    // Re-fetch current value to merge (avoid overwriting fields owned by other apps
+    // sharing the same settingsKey, e.g. all tracking apps share key="tracking")
+    const { data: existing } = await supabase
+      .from("store_settings")
+      .select("value")
+      .eq("key", config.settingsKey)
+      .maybeSingle();
+    const merged = {
+      ...((existing?.value as Record<string, any>) || {}),
+      ...values,
+    };
     const { error } = await supabase.from("store_settings").upsert(
-      { key: config.settingsKey, value: values as any },
+      { key: config.settingsKey, value: merged as any },
       { onConflict: "key" }
     );
     if (error) {
       toast({ title: "خطأ", description: "فشل في حفظ الإعدادات", variant: "destructive" });
     } else {
+      setValues(merged);
       toast({ title: "تم الحفظ", description: `تم حفظ إعدادات ${config.name} بنجاح` });
     }
     setSaving(false);
