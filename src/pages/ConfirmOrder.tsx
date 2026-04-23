@@ -330,6 +330,15 @@ const ConfirmOrder = () => {
   const handleAnswer = (qid: QId, val: Answer) => {
     const next = { ...answers, [qid]: val };
     setAnswers(next);
+    // Save partial score after EVERY answer so progress is captured
+    // even if the user abandons the flow midway.
+    if (pending?.order_id && !recordedRef.current.done) {
+      const partialScore = computePartialScore(next);
+      recordResponse(pending.order_id, "no_response", {
+        lead_score: partialScore,
+        lead_quality: "warm_lead",
+      });
+    }
     setTimeout(() => {
       // Step 1 ("ready") — soft-exit on "No": save warm lead and stop the flow
       if (qid === "ready" && val === "no") {
