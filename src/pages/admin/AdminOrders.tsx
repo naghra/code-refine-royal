@@ -622,9 +622,15 @@ export default function AdminOrders() {
     fetchOrders();
 
     const channel = supabase
-      .channel("admin-orders")
+      .channel(`admin-orders-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
+        console.log("[realtime] new order:", payload.new);
         toast({ title: "🛒 طلب جديد!", description: `طلب جديد من ${(payload.new as any).customer_name}` });
+        try {
+          const audio = new Audio("https://cdn.jsdelivr.net/gh/naomiaro/howler-sound-cdn@master/sounds/notification.mp3");
+          audio.volume = 0.6;
+          audio.play().catch(() => {});
+        } catch {}
         setOrders(prev => [payload.new as Order, ...prev]);
       })
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "orders" }, (payload) => {
@@ -635,7 +641,9 @@ export default function AdminOrders() {
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "orders" }, (payload) => {
         setOrders(prev => prev.filter(o => o.id !== (payload.old as any).id));
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log("[realtime] orders channel status:", status);
+      });
 
     return () => { supabase.removeChannel(channel); };
   }, []);
