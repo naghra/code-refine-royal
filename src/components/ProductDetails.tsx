@@ -245,21 +245,9 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
               }
             />
           ) : (
-            <>
-              <article
-                className={`relative overflow-hidden transition-all duration-300 ${
-                  showFullDescription ? "max-h-[2000px]" : "max-h-[200px]"
-                }`}
-              >
-                {renderNonAntibotDescription()}
-              </article>
-              <button
-                onClick={() => setShowFullDescription(!showFullDescription)}
-                className="text-primary text-sm mt-2 hover:text-accent transition-colors font-medium"
-              >
-                {showFullDescription ? "عرض أقل" : "قراءة المزيد"}
-              </button>
-            </>
+            <article>
+              {renderNonAntibotDescription()}
+            </article>
           )}
         </div>
 
