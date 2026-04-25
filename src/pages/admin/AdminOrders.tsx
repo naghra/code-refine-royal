@@ -594,20 +594,34 @@ export default function AdminOrders() {
 
   const fetchOrders = async () => {
     setLoading(true);
-    const { data, error } = await supabase.functions.invoke("list-orders", { body: {} });
-    if (error || !data?.success) {
-      toast({ title: "خطأ", description: "فشل تحميل الطلبات", variant: "destructive" });
-      setLoading(false);
-      return;
+    const PAGE_SIZE = 1000;
+    let allOrders: Order[] = [];
+    let from = 0;
+    let hasMore = true;
+    while (hasMore) {
+      const { data, error } = await db("orders")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(from, from + PAGE_SIZE - 1);
+      if (error) {
+        toast({ title: "خطأ", description: "فشل تحميل الطلبات", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      allOrders = allOrders.concat((data as Order[]) || []);
+      hasMore = (data?.length || 0) === PAGE_SIZE;
+      from += PAGE_SIZE;
     }
-    setOrders((data.orders as Order[]) || []);
+    setOrders(allOrders);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchOrders();
 
-    const channel = supabase
+    // Realtime — subscribe on the same client that owns the orders table.
+    const channelClient = clientFor("orders");
+    const channel = channelClient
       .channel(`admin-orders-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "orders" }, (payload) => {
         console.log("[realtime] new order:", payload.new);
@@ -631,7 +645,7 @@ export default function AdminOrders() {
         console.log("[realtime] orders channel status:", status);
       });
 
-    return () => { supabase.removeChannel(channel); };
+    return () => { channelClient.removeChannel(channel); };
   }, []);
 
   const PAGE_SIZE_DISPLAY = 10;
