@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { db, clientFor, getAuthenticatedUserId } from "@/integrations/supabase/external";
 import { useToast } from "@/hooks/use-toast";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useProductDraft, ProductDraftData } from "@/hooks/useProductDraft";
@@ -374,7 +375,7 @@ export default function AdminProductEdit() {
       }
 
       if (userId) {
-        await supabase.from("audit_logs").insert({
+        await db("audit_logs").insert({
           admin_id: userId,
           action_type: isNew ? "create" : "update",
           entity_type: "product",

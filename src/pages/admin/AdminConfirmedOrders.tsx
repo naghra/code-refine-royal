@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { db, clientFor, getAuthenticatedUserId } from "@/integrations/supabase/external";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CurrencySymbol } from "@/components/admin/CurrencySymbol";
 import { Input } from "@/components/ui/input";
@@ -152,7 +153,7 @@ export default function AdminConfirmedOrders() {
     const buildCount = (resp: string) => {
       // Use created_at for "no_response" (no confirmed_at), confirmed_at otherwise.
       const dateCol = resp === "confirmed" || resp === "rejected" ? "confirmed_at" : "created_at";
-      let q = supabase.from("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", resp);
+      let q = db("orders").select("id", { count: "exact", head: true }).eq("confirmation_response", resp);
       if (fromISO) q = q.gte(dateCol, fromISO);
       if (toISO) q = q.lte(dateCol, toISO);
       return q;
@@ -351,21 +352,21 @@ export default function AdminConfirmedOrders() {
           const leadId = res.data?.data?.data?.id || res.data?.data?.id;
           const updateData: any = { cod_network_status: "sent" };
           if (leadId) updateData.cod_network_lead_id = String(leadId);
-          await supabase.from("orders").update(updateData).eq("id", order.id);
+          await db("orders").update(updateData).eq("id", order.id);
           updates.push({ id: order.id, status: "sent", lead_id: leadId ? String(leadId) : undefined });
           success++;
         } else {
           const errorData = res.data?.data;
           const errorMsg = errorData?.message || errorData?.error || (typeof errorData === "string" ? errorData : JSON.stringify(errorData || "فشل غير معروف"));
           const errorStatus = `failed:${errorMsg}`.slice(0, 200);
-          await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
+          await db("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
           updates.push({ id: order.id, status: errorStatus });
           failed++;
         }
       } catch (err: any) {
         const errMsg = err?.message || String(err);
         const errorStatus = `failed:${errMsg}`.slice(0, 200);
-        await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
+        await db("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
         updates.push({ id: order.id, status: errorStatus });
         failed++;
       }

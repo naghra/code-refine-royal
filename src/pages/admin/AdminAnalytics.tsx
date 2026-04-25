@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { ar } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
+import { db, clientFor, getAuthenticatedUserId } from "@/integrations/supabase/external";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { useCurrency, CURRENCIES } from "@/hooks/useCurrency";
@@ -342,11 +343,11 @@ async function fetchAnalyticsData(currencyCode: string) {
   const weekStart = last7[0];
 
   const [countRes, todayData, weekData, recentRes, allOrdersData] = await Promise.all([
-    supabase.from("orders").select("*", { count: "exact", head: true }),
-    fetchAllRows(() => supabase.from("orders").select("total").gte("created_at", todayISO)),
-    fetchAllRows(() => supabase.from("orders").select("total, created_at").gte("created_at", weekStart)),
-    supabase.from("orders").select("customer_name, city, created_at").order("created_at", { ascending: false }).limit(5),
-    fetchAllRows(() => supabase.from("orders").select("ip_country, total, created_at, order_items(product_id, products(currency_code, currency_enabled))")),
+    db("orders").select("*", { count: "exact", head: true }),
+    fetchAllRows(() => db("orders").select("total").gte("created_at", todayISO)),
+    fetchAllRows(() => db("orders").select("total, created_at").gte("created_at", weekStart)),
+    db("orders").select("customer_name, city, created_at").order("created_at", { ascending: false }).limit(5),
+    fetchAllRows(() => db("orders").select("ip_country, total, created_at, order_items(product_id, products(currency_code, currency_enabled))")),
   ]);
 
   const totalOrders = countRes.count || 0;

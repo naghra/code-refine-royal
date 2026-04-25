@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { ConfirmDeleteDialog } from "@/components/ConfirmDeleteDialog";
 import { supabase } from "@/integrations/supabase/client";
+import { db, clientFor, getAuthenticatedUserId } from "@/integrations/supabase/external";
 import { useToast } from "@/hooks/use-toast";
 import { notify } from "@/lib/notify";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -707,7 +708,7 @@ export default function AdminOrders() {
       .eq("id", orderId);
 
     if (!error && user) {
-      await supabase.from("audit_logs").insert({
+      await db("audit_logs").insert({
         admin_id: user.id,
         action_type: "status_change",
         entity_type: "order",
@@ -748,7 +749,7 @@ export default function AdminOrders() {
 
   const confirmDeleteOrder = async () => {
     if (!deleteOrderTarget) return;
-    const { error } = await supabase.from("orders").delete().eq("id", deleteOrderTarget);
+    const { error } = await db("orders").delete().eq("id", deleteOrderTarget);
     if (!error) {
       toast({ title: "تم حذف الطلب" });
     }
@@ -757,7 +758,7 @@ export default function AdminOrders() {
 
   const saveNotes = async () => {
     if (!selectedOrder) return;
-    await supabase.from("orders").update({ notes: internalNotes }).eq("id", selectedOrder.id);
+    await db("orders").update({ notes: internalNotes }).eq("id", selectedOrder.id);
     toast({ title: "تم حفظ الملاحظات" });
   };
 
@@ -838,7 +839,7 @@ export default function AdminOrders() {
           const mappedStatus = getMappedSystemStatusFromCodData(leadData);
           if (preferredCodStatus) updateData.cod_network_status = preferredCodStatus;
           if (mappedStatus) updateData.status = mappedStatus;
-          await supabase.from("orders").update(updateData).eq("id", order.id);
+          await db("orders").update(updateData).eq("id", order.id);
           updated++;
         } else {
           failed++;
@@ -938,19 +939,19 @@ export default function AdminOrders() {
           const leadId = res.data?.data?.data?.id || res.data?.data?.id;
           const updateData: any = { cod_network_status: "sent" };
           if (leadId) updateData.cod_network_lead_id = String(leadId);
-          await supabase.from("orders").update(updateData).eq("id", order.id);
+          await db("orders").update(updateData).eq("id", order.id);
           success++;
         } else {
           // Extract error reason from CodNetwork response
           const errorData = res.data?.data;
           const errorMsg = errorData?.message || errorData?.error || (typeof errorData === 'string' ? errorData : JSON.stringify(errorData || 'فشل غير معروف'));
           const errorStatus = `failed:${errorMsg}`.slice(0, 200);
-          await supabase.from("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
+          await db("orders").update({ cod_network_status: errorStatus }).eq("id", order.id);
           failed++;
         }
       } catch (err: any) {
         const errMsg = err?.message || String(err);
-        await supabase.from("orders").update({ cod_network_status: `failed:${errMsg}`.slice(0, 200) }).eq("id", order.id);
+        await db("orders").update({ cod_network_status: `failed:${errMsg}`.slice(0, 200) }).eq("id", order.id);
         failed++;
       }
     }
@@ -1239,7 +1240,7 @@ export default function AdminOrders() {
                                 const mappedStatus = getMappedSystemStatusFromCodData(leadData);
                                 if (preferredCodStatus) updateData.cod_network_status = preferredCodStatus;
                                 if (mappedStatus) updateData.status = mappedStatus;
-                                await supabase.from("orders").update(updateData).eq("id", selectedOrder.id);
+                                await db("orders").update(updateData).eq("id", selectedOrder.id);
                                 toast({ title: "تم تحديث بيانات الشحنة" });
                               } else {
                                 toast({ title: "لا توجد بيانات", description: "تعذر جلب بيانات من CodNetwork", variant: "destructive" });
@@ -1278,7 +1279,7 @@ export default function AdminOrders() {
                                     const mappedStatus = getMappedSystemStatusFromCodData(leadData);
                                     if (preferredCodStatus) updateData.cod_network_status = preferredCodStatus;
                                     if (mappedStatus) updateData.status = mappedStatus;
-                                    await supabase.from("orders").update(updateData).eq("id", selectedOrder!.id);
+                                    await db("orders").update(updateData).eq("id", selectedOrder!.id);
                                     toast({ title: "تم التحديث" });
                                   }
                                 } catch {}
