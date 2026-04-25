@@ -141,8 +141,7 @@ export default function AdminConfirmedOrders() {
     const fromISO = dateFrom ? riyadhDayBoundsISO(dateFrom, false) : null;
     const toISO = dateTo ? riyadhDayBoundsISO(dateTo, true) : null;
 
-    let listQ = supabase
-      .from("orders")
+    let listQ = db("orders")
       .select("id, order_number, customer_name, customer_phone, city, address, total, subtotal, shipping_cost, status, created_at, confirmed_at, confirmation_response, lead_score, lead_quality, gift_name, gift_sku, notes, cod_network_status, cod_network_lead_id, phone_status")
       .eq("confirmation_response", "confirmed")
       .order("confirmed_at", { ascending: false, nullsFirst: false })
@@ -230,8 +229,7 @@ export default function AdminConfirmedOrders() {
     setDetailsOrder(o);
     setDetailsItems([]);
     setLoadingDetails(true);
-    const { data } = await supabase
-      .from("order_items")
+    const { data } = await db("order_items")
       .select("id, product_id, product_name, quantity, unit_price, total_price")
       .eq("order_id", o.id);
     setDetailsItems((data as OrderItem[]) || []);
@@ -291,8 +289,7 @@ export default function AdminConfirmedOrders() {
 
     for (const order of selected) {
       try {
-        const { data: items } = await supabase
-          .from("order_items")
+        const { data: items } = await db("order_items")
           .select("product_name, quantity, unit_price, total_price, product_id")
           .eq("order_id", order.id);
 

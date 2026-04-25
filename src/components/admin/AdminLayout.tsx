@@ -309,8 +309,7 @@ export default function AdminLayout() {
     const fetchRecent = async () => {
       const since = new Date();
       since.setHours(since.getHours() - 24);
-      const { data } = await supabase
-        .from("orders")
+      const { data } = await db("orders")
         .select("id, order_number, customer_name, total, created_at, status")
         .gte("created_at", since.toISOString())
         .order("created_at", { ascending: false })

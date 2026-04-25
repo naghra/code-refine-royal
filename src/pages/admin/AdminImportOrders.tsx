@@ -155,8 +155,7 @@ export default function AdminImportOrders() {
 
       // Match by cod_network_lead_id
       const { data: ordersByLead } = allLeadIds.length > 0
-        ? await supabase
-            .from("orders")
+        ? await db("orders")
             .select("id, order_number, status, customer_name, customer_phone, cod_network_lead_id")
             .in("cod_network_lead_id", allLeadIds)
         : { data: [] };
@@ -164,8 +163,7 @@ export default function AdminImportOrders() {
       // Match by order_number (numeric refs)
       const numericRefs = refs.filter(r => /^\d+$/.test(r)).map(Number);
       const { data: ordersByNum } = numericRefs.length > 0
-        ? await supabase
-            .from("orders")
+        ? await db("orders")
             .select("id, order_number, status, customer_name, customer_phone, cod_network_lead_id")
             .in("order_number", numericRefs)
         : { data: [] };
@@ -220,8 +218,7 @@ export default function AdminImportOrders() {
             }
           }
 
-          const { error } = await supabase
-            .from("orders")
+          const { error } = await db("orders")
             .update(codNetworkUpdate)
             .eq("id", order.id);
 

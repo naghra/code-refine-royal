@@ -678,14 +678,12 @@ export default function AdminOrders() {
     setInternalNotes(order.notes || "");
     setCodLeadData(null);
 
-    const { data: items } = await supabase
-      .from("order_items")
+    const { data: items } = await db("order_items")
       .select("*")
       .eq("order_id", order.id);
     setOrderItems((items as OrderItem[]) || []);
 
-    const { data: logs } = await supabase
-      .from("audit_logs")
+    const { data: logs } = await db("audit_logs")
       .select("*")
       .eq("entity_type", "order")
       .eq("entity_id", order.id)
@@ -702,8 +700,7 @@ export default function AdminOrders() {
     const order = orders.find((o) => o.id === orderId);
     const { data: { user } } = await supabase.auth.getUser();
 
-    const { error } = await supabase
-      .from("orders")
+    const { error } = await db("orders")
       .update({ status: newStatus as any })
       .eq("id", orderId);
 
@@ -772,8 +769,7 @@ export default function AdminOrders() {
       const CHUNK = 500;
       for (let i = 0; i < ids.length; i += CHUNK) {
         const slice = ids.slice(i, i + CHUNK);
-        const { data: items } = await supabase
-          .from("order_items")
+        const { data: items } = await db("order_items")
           .select("order_id, quantity")
           .in("order_id", slice);
         (items || []).forEach((it: any) => {
@@ -870,8 +866,7 @@ export default function AdminOrders() {
     for (const order of selected) {
       try {
         // Fetch order items with product SKU
-        const { data: items } = await supabase
-          .from("order_items")
+        const { data: items } = await db("order_items")
           .select("product_name, quantity, unit_price, total_price, product_id")
           .eq("order_id", order.id);
 
