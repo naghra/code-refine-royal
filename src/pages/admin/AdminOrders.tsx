@@ -698,15 +698,15 @@ export default function AdminOrders() {
 
   const updateStatus = async (orderId: string, newStatus: string) => {
     const order = orders.find((o) => o.id === orderId);
-    const { data: { user } } = await supabase.auth.getUser();
+    const adminId = await getAuthenticatedUserId("audit_logs");
 
     const { error } = await db("orders")
       .update({ status: newStatus as any })
       .eq("id", orderId);
 
-    if (!error && user) {
+    if (!error && adminId) {
       await db("audit_logs").insert({
-        admin_id: user.id,
+        admin_id: adminId,
         action_type: "status_change",
         entity_type: "order",
         entity_id: orderId,

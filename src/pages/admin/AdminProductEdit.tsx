@@ -374,9 +374,10 @@ export default function AdminProductEdit() {
         if (error) throw error;
       }
 
-      if (userId) {
+      const auditAdminId = (await getAuthenticatedUserId("audit_logs")) || userId;
+      if (auditAdminId) {
         await db("audit_logs").insert({
-          admin_id: userId,
+          admin_id: auditAdminId,
           action_type: isNew ? "create" : "update",
           entity_type: "product",
           entity_id: productId,
