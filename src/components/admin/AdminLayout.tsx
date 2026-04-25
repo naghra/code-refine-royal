@@ -3,6 +3,7 @@ import { Navigate, Outlet, NavLink, useNavigate } from "react-router-dom";
 import CodFormLogo from "@/components/CodFormLogo";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
+import { db, getExternalClient, initExternalRouter } from "@/integrations/supabase/external";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -65,6 +66,29 @@ function AdminLogin() {
     });
     if (error) {
       toast({ title: "خطأ", description: "البريد أو كلمة المرور غير صحيحة", variant: "destructive" });
+      setLoading(false);
+      return;
+    }
+    // Also sign into the external project (if external mode is enabled),
+    // so writes/reads on orders/order_items/audit_logs are authenticated there.
+    try {
+      await initExternalRouter();
+      const ext = getExternalClient();
+      if (ext) {
+        const { error: extErr } = await ext.auth.signInWithPassword({
+          email: email.trim(),
+          password: password.trim(),
+        });
+        if (extErr) {
+          toast({
+            title: "تنبيه",
+            description: "تم الدخول للوحة لكن فشل الدخول لقاعدة البيانات الخارجية. تأكد أن نفس الحساب موجود هناك.",
+            variant: "destructive",
+          });
+        }
+      }
+    } catch {
+      /* ignore */
     }
     setLoading(false);
   };
