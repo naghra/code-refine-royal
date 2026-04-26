@@ -33,6 +33,7 @@ import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminImportOrders from "./pages/admin/AdminImportOrders";
 import AdminAppStore from "./pages/admin/AdminAppStore";
 import AdminAppSettings from "./pages/admin/AdminAppSettings";
+import Prelander from "./pages/Prelander";
 
 
 const queryClient = new QueryClient({
@@ -69,6 +70,8 @@ const App = () => (
           <Route path="/order" element={<OrderLanding />} />
           <Route path="/confirm" element={<ConfirmOrder />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/news" element={<Prelander />} />
+          <Route path="/prelander" element={<Prelander />} />
 
           {/* Admin Dashboard */}
           <Route path="/admin" element={<AdminLayout />}>
