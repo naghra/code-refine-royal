@@ -6,6 +6,23 @@ const Prelander = () => {
 
   useEffect(() => {
     document.title = "خبر صحي عاجل: تركيبة طبيعية تعيد التستوستيرون | تقرير صحي";
+    // Load IBM Plex Sans Arabic font once
+    if (!document.getElementById("ibm-plex-arabic-font")) {
+      const preconnect1 = document.createElement("link");
+      preconnect1.rel = "preconnect";
+      preconnect1.href = "https://fonts.googleapis.com";
+      document.head.appendChild(preconnect1);
+      const preconnect2 = document.createElement("link");
+      preconnect2.rel = "preconnect";
+      preconnect2.href = "https://fonts.gstatic.com";
+      preconnect2.crossOrigin = "anonymous";
+      document.head.appendChild(preconnect2);
+      const link = document.createElement("link");
+      link.id = "ibm-plex-arabic-font";
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap";
+      document.head.appendChild(link);
+    }
     const meta = document.querySelector('meta[name="description"]') || (() => {
       const m = document.createElement("meta");
       m.setAttribute("name", "description");
@@ -31,7 +48,7 @@ const Prelander = () => {
   const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div dir="rtl" className="min-h-screen bg-white text-neutral-900" style={{ fontFamily: "'Noto Naskh Arabic', 'Tajawal', system-ui, serif" }}>
+    <div dir="rtl" className="min-h-screen bg-white text-neutral-900" style={{ fontFamily: "'IBM Plex Sans Arabic', system-ui, sans-serif" }}>
       {/* Top news bar */}
       <header className="border-b border-neutral-200">
         <div className="bg-red-600 text-white text-xs sm:text-sm py-1.5 px-4 text-center font-semibold tracking-wide">
