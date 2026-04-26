@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import productImage from "@/assets/testosterone-boost.png";
 import productHero from "@/assets/testosterone-boost-hero.jpg";
+import productDiscovery from "@/assets/testosterone-boost-discovery.jpg";
 
 const Prelander = () => {
   const [timeLeft, setTimeLeft] = useState({ h: 2, m: 47, s: 33 });
@@ -136,22 +137,16 @@ const Prelander = () => {
 
         {/* Discovery */}
         <h2 className="text-2xl font-black mt-10 mb-3 border-r-4 border-red-600 pr-3">الاكتشاف: تركيبة Testosterone Boost</h2>
-        <figure className="my-4 grid grid-cols-2 gap-3 items-center bg-neutral-50 border border-neutral-200 rounded-md p-4">
+        <figure className="my-4">
           <img
-            src={productImage}
-            alt="عبوة Testosterone Boost"
-            className="h-44 sm:h-56 w-auto object-contain mx-auto drop-shadow-xl"
+            src={productDiscovery}
+            alt="تركيبة Testosterone Boost مع مكونات طبيعية: جينسنغ، أشواغاندا، وكبسولات"
+            className="w-full h-56 sm:h-80 object-cover rounded-md"
             loading="lazy"
           />
-          <div className="text-sm text-neutral-700 leading-relaxed">
-            <div className="font-black text-neutral-900 mb-1">Testosterone Boost</div>
-            <div className="text-xs text-neutral-500 mb-2">30 كبسولة · سريعة الذوبان</div>
-            <ul className="space-y-1 text-[13px]">
-              <li>✓ مكونات طبيعية</li>
-              <li>✓ يدعم الطاقة والحيوية</li>
-              <li>✓ يدعم القوة والكتلة العضلية</li>
-            </ul>
-          </div>
+          <figcaption className="text-xs text-neutral-500 mt-2 text-center">
+            مكونات نباتية مستوحاة من الطب التقليدي والأبحاث الحديثة في صحة الرجل.
+          </figcaption>
         </figure>
         <div className="text-[17px] leading-loose space-y-4 text-neutral-800">
           <p>
