@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import productImage from "@/assets/testosterone-boost.png";
+import productHero from "@/assets/testosterone-boost-hero.jpg";
 
 const Prelander = () => {
   const [timeLeft, setTimeLeft] = useState({ h: 2, m: 47, s: 33 });
@@ -90,14 +91,12 @@ const Prelander = () => {
 
         {/* Hero image */}
         <figure className="mb-6">
-          <div className="w-full bg-gradient-to-b from-neutral-100 to-neutral-200 rounded-md flex items-center justify-center py-6">
-            <img
-              src={productImage}
-              alt="عبوة Testosterone Boost — مكمل غذائي لدعم الطاقة والحيوية"
-              className="h-64 sm:h-96 w-auto object-contain drop-shadow-2xl"
-              loading="eager"
-            />
-          </div>
+          <img
+            src={productHero}
+            alt="عبوة Testosterone Boost — مكمل غذائي لدعم الطاقة والحيوية"
+            className="w-full h-56 sm:h-80 object-cover rounded-md"
+            loading="eager"
+          />
           <figcaption className="text-xs text-neutral-500 mt-2 text-center">
             تركيبة Testosterone Boost — 30 كبسولة سريعة الذوبان لدعم التوازن الطبيعي عند الرجال.
           </figcaption>
