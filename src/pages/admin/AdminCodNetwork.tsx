@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter, LayoutDashboard, TrendingUp, ShoppingBag, Truck, FileText, Store, Boxes, Users, ClipboardList, BarChart3, ShoppingCart, PackageSearch } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface CodNetworkSettings {
@@ -47,6 +47,11 @@ export default function AdminCodNetwork() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
+
+  // Network dashboard sections
+  type SectionStat = { key: string; ok: boolean; status: number; total: number | null; error?: string };
+  const [dashboard, setDashboard] = useState<SectionStat[] | null>(null);
+  const [loadingDashboard, setLoadingDashboard] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -116,6 +121,44 @@ export default function AdminCodNetwork() {
       toast({ title: "❌ فشل جلب المنتجات", variant: "destructive" });
     }
     setLoadingProducts(false);
+  };
+
+  const fetchDashboard = async () => {
+    if (!settings.api_token) {
+      toast({ title: "أدخل API Token أولاً", variant: "destructive" });
+      return;
+    }
+    setLoadingDashboard(true);
+    try {
+      const res = await supabase.functions.invoke("cod-network-proxy", {
+        body: { action: "get_dashboard", api_token: settings.api_token },
+      });
+      if (res.error) throw res.error;
+      const sections = (res.data?.sections || []) as SectionStat[];
+      setDashboard(sections);
+      const okCount = sections.filter((s) => s.ok).length;
+      toast({ title: `✅ تم جلب ${okCount}/${sections.length} قسم` });
+    } catch (err) {
+      console.error("dashboard err", err);
+      toast({ title: "❌ فشل جلب لوحة الشبكة", variant: "destructive" });
+    }
+    setLoadingDashboard(false);
+  };
+
+  const SECTION_META: Record<string, { label: string; icon: any; gradient: string }> = {
+    confirmed_dashboard: { label: "Confirmed Dashboard", icon: CheckCircle, gradient: "from-emerald-500 to-teal-500" },
+    delivered_dashboard: { label: "Delivered Dashboard", icon: Truck, gradient: "from-green-500 to-emerald-600" },
+    source_requests: { label: "Source Requests", icon: PackageSearch, gradient: "from-sky-500 to-blue-500" },
+    purchases: { label: "Purchases", icon: ShoppingBag, gradient: "from-violet-500 to-purple-500" },
+    marketplace_products: { label: "Marketplace Products", icon: Store, gradient: "from-fuchsia-500 to-pink-500" },
+    products: { label: "Products", icon: Package, gradient: "from-amber-500 to-orange-500" },
+    drop_products: { label: "Drop Products", icon: Boxes, gradient: "from-rose-500 to-red-500" },
+    stocks: { label: "Stocks", icon: Box, gradient: "from-indigo-500 to-blue-600" },
+    leads: { label: "Leads", icon: Users, gradient: "from-cyan-500 to-teal-500" },
+    orders: { label: "Orders", icon: ShoppingCart, gradient: "from-orange-500 to-amber-600" },
+    statistics: { label: "Statistics", icon: BarChart3, gradient: "from-purple-500 to-indigo-500" },
+    stores: { label: "Stores", icon: Store, gradient: "from-teal-500 to-emerald-500" },
+    invoices: { label: "Invoices", icon: FileText, gradient: "from-slate-500 to-slate-700" },
   };
 
   const getTotalStock = (stocks: CodProduct["stocks"]) => {
