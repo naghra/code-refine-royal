@@ -54,35 +54,22 @@ export const SECTIONS: SectionConfig[] = [
   { key: "invoices", label: "Invoices", icon: FileText, gradient: "from-slate-500 to-slate-700", kind: "list" },
 ];
 
-// Field labels per dashboard endpoint (matches V2 docs).
+// Field labels for the synthesized stats payload returned by the proxy.
+// Keys must match the `stats` object built in cod-network-proxy/index.ts.
 export const DASHBOARD_FIELDS: Record<string, { key: string; label: string }[]> = {
   confirmed_dashboard: [
-    { key: "total_leads_count", label: "Total leads" },
-    { key: "total_new_leads_count", label: "New leads" },
-    { key: "total_confirmed_leads_count", label: "Confirmed" },
-    { key: "total_canceled_price_leads_count", label: "Cancelled price" },
-    { key: "total_processing_leads_count", label: "Processing" },
-    { key: "total_no_reply_leads_count", label: "No reply" },
-    { key: "total_canceled_leads_count", label: "Cancelled" },
-    { key: "total_wrong_leads_count", label: "Wrong" },
-    { key: "total_expired_leads_count", label: "Expired" },
-    { key: "total_call_later_scheduled_leads_count", label: "Call later" },
+    { key: "total", label: "إجمالي Leads" },
+    { key: "shown", label: "المعروض حالياً" },
+    { key: "pages_fetched", label: "صفحات مجلوبة" },
   ],
   delivered_dashboard: [
-    { key: "shipped_orders", label: "Shipped" },
-    { key: "processing_orders", label: "Processing" },
-    { key: "delivered_orders", label: "Delivered" },
-    { key: "returned_orders", label: "Returned" },
-    { key: "sales", label: "Sales" },
-    { key: "profits", label: "Profits" },
-    { key: "shipping_cost", label: "Shipping cost" },
-    { key: "delivery_cost", label: "Delivery cost" },
-    { key: "vat", label: "VAT" },
-    { key: "cod_fees", label: "COD fees" },
-    { key: "entered_leads_fees", label: "Entered fees" },
-    { key: "confirmed_leads_fees", label: "Confirmed fees" },
-    { key: "delivered_leads_fees", label: "Delivered fees" },
-    { key: "up_down_cross_sell_fees", label: "Up/Down/Cross fees" },
-    { key: "total_product_cost", label: "Product cost" },
+    { key: "total", label: "إجمالي الطلبات" },
+    { key: "shown", label: "تم تجميعها" },
+    { key: "total_amount", label: "إجمالي المبيعات" },
+    { key: "total_amount_usd", label: "المبيعات (USD)" },
+    { key: "shipping_cost", label: "تكلفة الشحن" },
+    { key: "delivery_fees", label: "رسوم التوصيل" },
+    { key: "profit", label: "الربح" },
+    { key: "pages_fetched", label: "صفحات مجلوبة" },
   ],
 };
