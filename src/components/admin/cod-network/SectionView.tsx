@@ -185,36 +185,168 @@ export default function SectionView({ section, apiToken }: Props) {
   );
 }
 
+// Per-card visual + meaning configuration. `denom` selects which field to use
+// as 100% baseline so we can render a meaningful percentage on each card.
+const CARD_META: Record<
+  string,
+  { accent: string; ring: string; bar: string; denom?: string; format?: "money" | "int" }
+> = {
+  // Confirmed Dashboard — % of total leads
+  total_leads_count:                       { accent: "from-indigo-500 to-violet-600",  ring: "ring-indigo-500/30",  bar: "from-indigo-500 to-violet-500" },
+  total_new_leads_count:                   { accent: "from-sky-500 to-blue-600",       ring: "ring-sky-500/30",     bar: "from-sky-500 to-blue-500",       denom: "total_leads_count" },
+  total_confirmed_leads_count:             { accent: "from-emerald-500 to-teal-600",   ring: "ring-emerald-500/30", bar: "from-emerald-500 to-teal-500",   denom: "total_leads_count" },
+  total_processing_leads_count:            { accent: "from-amber-500 to-orange-600",   ring: "ring-amber-500/30",   bar: "from-amber-500 to-orange-500",   denom: "total_leads_count" },
+  total_no_reply_leads_count:              { accent: "from-yellow-500 to-amber-600",   ring: "ring-yellow-500/30",  bar: "from-yellow-500 to-amber-500",   denom: "total_leads_count" },
+  total_canceled_leads_count:              { accent: "from-rose-500 to-red-600",       ring: "ring-rose-500/30",    bar: "from-rose-500 to-red-500",       denom: "total_leads_count" },
+  total_wrong_leads_count:                 { accent: "from-pink-500 to-rose-600",      ring: "ring-pink-500/30",    bar: "from-pink-500 to-rose-500",      denom: "total_leads_count" },
+  total_expired_leads_count:               { accent: "from-slate-500 to-slate-700",    ring: "ring-slate-500/30",   bar: "from-slate-500 to-slate-600",    denom: "total_leads_count" },
+  total_call_later_scheduled_leads_count:  { accent: "from-fuchsia-500 to-purple-600", ring: "ring-fuchsia-500/30", bar: "from-fuchsia-500 to-purple-500", denom: "total_leads_count" },
+  // Delivered Dashboard
+  shipped_orders:    { accent: "from-sky-500 to-blue-600",     ring: "ring-sky-500/30",     bar: "from-sky-500 to-blue-500" },
+  processing_orders: { accent: "from-amber-500 to-orange-600", ring: "ring-amber-500/30",   bar: "from-amber-500 to-orange-500", denom: "shipped_orders" },
+  delivered_orders:  { accent: "from-emerald-500 to-teal-600", ring: "ring-emerald-500/30", bar: "from-emerald-500 to-teal-500", denom: "shipped_orders" },
+  returned_orders:   { accent: "from-rose-500 to-red-600",     ring: "ring-rose-500/30",    bar: "from-rose-500 to-red-500",     denom: "shipped_orders" },
+  sales:             { accent: "from-emerald-500 to-green-600",ring: "ring-emerald-500/30", bar: "from-emerald-500 to-green-500", format: "money" },
+  profits:           { accent: "from-teal-500 to-emerald-600", ring: "ring-teal-500/30",    bar: "from-teal-500 to-emerald-500", format: "money", denom: "sales" },
+  shipping_cost:     { accent: "from-orange-500 to-red-500",   ring: "ring-orange-500/30",  bar: "from-orange-500 to-red-500",   format: "money", denom: "sales" },
+  delivery_cost:     { accent: "from-amber-500 to-orange-600", ring: "ring-amber-500/30",   bar: "from-amber-500 to-orange-500", format: "money", denom: "sales" },
+  vat:               { accent: "from-violet-500 to-purple-600",ring: "ring-violet-500/30",  bar: "from-violet-500 to-purple-500", format: "money", denom: "sales" },
+  cod_fees:          { accent: "from-fuchsia-500 to-pink-600", ring: "ring-fuchsia-500/30", bar: "from-fuchsia-500 to-pink-500", format: "money", denom: "sales" },
+};
+
+const DEFAULT_META = {
+  accent: "from-slate-500 to-slate-700",
+  ring: "ring-slate-500/20",
+  bar: "from-slate-500 to-slate-600",
+};
+
+function num(v: any): number {
+  if (typeof v === "number") return v;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function StatsGrid({ section, payload }: { section: SectionConfig; payload: any }) {
   const fields = DASHBOARD_FIELDS[section.key] || [];
   const root = payload?.data ?? payload ?? {};
+
+  // Hero card = first field (Total leads / Shipped orders) — full width banner.
+  const [hero, ...rest] = fields;
+  const heroValue = hero ? num(root?.[hero.key]) : 0;
+  const heroMeta = (hero && CARD_META[hero.key]) || DEFAULT_META;
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-      {fields.map((f) => {
-        const raw = root?.[f.key];
-        const value = typeof raw === "number" ? raw : Number(raw) || 0;
-        const display = Number.isInteger(value)
-          ? value.toLocaleString("en-US")
-          : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        return (
-          <motion.div
-            key={f.key}
-            initial={{ opacity: 0, scale: 0.96 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="relative overflow-hidden rounded-xl border border-border bg-card p-4"
-          >
-            <div
-              className={`absolute -top-6 -left-6 w-20 h-20 rounded-full bg-gradient-to-br ${section.gradient} opacity-10`}
-            />
-            <p className="text-[11px] text-muted-foreground mb-1 relative">{f.label}</p>
-            <p className="text-2xl font-bold text-foreground tabular-nums relative">
-              {display}
-            </p>
-          </motion.div>
-        );
-      })}
+    <div className="space-y-4">
+      {/* HERO */}
+      {hero && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br ${heroMeta.accent} text-white shadow-xl`}
+        >
+          {/* Decorative blobs */}
+          <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-white/15 blur-2xl" />
+          <div className="absolute -bottom-20 -left-10 w-64 h-64 rounded-full bg-black/20 blur-3xl" />
+          {/* Grid pattern */}
+          <div
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)",
+              backgroundSize: "28px 28px",
+            }}
+          />
+          <div className="relative flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <p className="text-[11px] uppercase tracking-[0.2em] text-white/70 font-semibold">
+                {hero.label}
+              </p>
+              <p className="text-5xl md:text-6xl font-black tabular-nums mt-2 drop-shadow-sm">
+                {formatValue(heroValue, CARD_META[hero.key]?.format)}
+              </p>
+              <p className="text-xs text-white/70 mt-2 flex items-center gap-1.5">
+                <TrendingUp className="w-3.5 h-3.5" />
+                إجمالي الفترة المحددة • UTC+3
+              </p>
+            </div>
+            <div className="hidden md:flex w-20 h-20 rounded-2xl bg-white/15 backdrop-blur-sm items-center justify-center ring-1 ring-white/30">
+              <section.icon className="w-10 h-10 text-white" />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* STAT CARDS */}
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        {rest.map((f, i) => {
+          const meta = CARD_META[f.key] || DEFAULT_META;
+          const value = num(root?.[f.key]);
+          const denomVal = meta.denom ? num(root?.[meta.denom]) : 0;
+          const pct = denomVal > 0 ? Math.min(100, (value / denomVal) * 100) : null;
+          return (
+            <motion.div
+              key={f.key}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.04 * i }}
+              whileHover={{ y: -3 }}
+              className={`group relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-lg hover:ring-2 ${meta.ring} transition-all`}
+            >
+              {/* corner gradient glow */}
+              <div
+                className={`absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br ${meta.accent} opacity-20 blur-2xl group-hover:opacity-40 transition-opacity`}
+              />
+              {/* accent stripe */}
+              <div className={`absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r ${meta.bar}`} />
+
+              <div className="relative flex items-start justify-between gap-2">
+                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide leading-tight">
+                  {f.label}
+                </p>
+                {pct !== null && (
+                  <span
+                    className={`shrink-0 text-[10px] font-bold px-1.5 py-0.5 rounded-md text-white bg-gradient-to-br ${meta.bar} shadow-sm`}
+                  >
+                    {pct.toFixed(1)}%
+                  </span>
+                )}
+              </div>
+
+              <p className="relative text-3xl font-black text-foreground tabular-nums mt-2 leading-none">
+                {formatValue(value, meta.format)}
+              </p>
+
+              {/* Progress bar */}
+              <div className="relative mt-3 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${pct ?? 0}%` }}
+                  transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 + 0.04 * i }}
+                  className={`h-full rounded-full bg-gradient-to-r ${meta.bar}`}
+                />
+              </div>
+
+              {pct !== null ? (
+                <p className="relative text-[10px] text-muted-foreground mt-1.5">
+                  من {DASHBOARD_FIELDS[section.key]?.find((x) => x.key === meta.denom)?.label || "الإجمالي"}
+                </p>
+              ) : (
+                <p className="relative text-[10px] text-muted-foreground mt-1.5 opacity-0">.</p>
+              )}
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
+}
+
+function formatValue(v: number, format?: "money" | "int"): string {
+  if (format === "money") {
+    return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  if (Number.isInteger(v)) return v.toLocaleString("en-US");
+  return v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 function ListView({ section, payload }: { section: SectionConfig; payload: any }) {
