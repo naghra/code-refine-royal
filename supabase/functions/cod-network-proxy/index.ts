@@ -5,7 +5,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const COD_NETWORK_API_BASE = "https://api.cod.network/v1/seller";
+// Upgraded to Seller API V2 (https://developer.cod.network/v2)
+const COD_NETWORK_API_BASE = "https://api.cod.network/v2/seller";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
