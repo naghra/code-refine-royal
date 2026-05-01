@@ -82,26 +82,28 @@ serve(async (req) => {
     }
 
     if (action === "get_lead" && body.lead_id) {
-      // Try fetching the lead first
-      const leadRes = await fetch(`${COD_NETWORK_API_BASE}/leads/${body.lead_id}`, {
-        method: "GET",
-        headers: authHeaders,
-      });
+      // V2: fetch lead with related order, items, history in one request via include=
+      const leadRes = await fetch(
+        `${COD_NETWORK_API_BASE}/leads/${body.lead_id}?include=order,items,history`,
+        { method: "GET", headers: authHeaders }
+      );
       const leadData = await leadRes.json().catch(() => ({}));
-      
-      // Also fetch the order associated with this lead (contains shipment details)
-      const orderRes = await fetch(`${COD_NETWORK_API_BASE}/orders?lead_id=${body.lead_id}`, {
-        method: "GET",
-        headers: authHeaders,
-      });
+
+      // Also fetch orders matching this lead (V2 supports search by lead_id)
+      const orderRes = await fetch(
+        `${COD_NETWORK_API_BASE}/orders?search=lead_id:${body.lead_id}&include=items,history`,
+        { method: "GET", headers: authHeaders }
+      );
       const orderData = await orderRes.json().catch(() => ({}));
       console.log("CodNetwork get_lead:", leadRes.status, "get_order:", orderRes.status, "lead_id:", body.lead_id);
-      
+
       // Merge: prefer lead data for status, attach order data for shipment info
       const lead = leadRes.ok ? leadData?.data : null;
-      // Filter orders to find the one matching this lead_id (API may not filter properly)
+      // V2 may already embed the order via include=order. Fall back to /orders results.
+      const embeddedOrder = lead && (lead as any).order ? (lead as any).order : null;
       const ordersArr = orderRes.ok && Array.isArray(orderData?.data) ? orderData.data : [];
-      const order = ordersArr.find((o: any) => String(o.lead_id) === String(body.lead_id)) || null;
+      const matchedFromList = ordersArr.find((o: any) => String(o.lead_id) === String(body.lead_id)) || null;
+      const order = embeddedOrder || matchedFromList;
       if (ordersArr.length > 0 && !order) {
         console.log("CodNetwork: orders returned but none matched lead_id", body.lead_id, "got lead_ids:", ordersArr.map((o: any) => o.lead_id));
       }
