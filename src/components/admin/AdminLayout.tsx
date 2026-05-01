@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate, Outlet, NavLink, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, NavLink, useNavigate, useLocation } from "react-router-dom";
 import CodFormLogo from "@/components/CodFormLogo";
 import { useAdmin } from "@/hooks/useAdmin";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,6 +22,7 @@ import {
   User,
   ChevronRight,
   ChevronLeft,
+  ChevronDown,
   BarChart3,
   Zap,
   Table2,
@@ -31,6 +32,7 @@ import {
   Store,
 } from "lucide-react";
 import MobileBottomNav from "./MobileBottomNav";
+import { SECTIONS as COD_SECTIONS } from "./cod-network/sectionConfig";
 
 const navItems = [
   { to: "/admin/analytics", icon: BarChart3, label: "الإحصائيات" },
@@ -38,7 +40,7 @@ const navItems = [
   { to: "/admin/confirmed-orders", icon: CheckCircle2, label: "الطلبات المؤكدة" },
   { to: "/admin/products", icon: Package, label: "المنتجات" },
   { to: "/admin/cod-form", icon: Zap, label: "CodForm", badge: "PRO", customLabel: true },
-  { to: "/admin/cod-network", icon: Truck, label: "CodNetwork" },
+  { to: "/admin/cod-network", icon: Truck, label: "CodNetwork", hasChildren: true },
   { to: "/admin/google-sheets", icon: Table2, label: "Google Sheets" },
   { to: "/admin/whatsapp", icon: MessageCircle, label: "واتساب" },
   { to: "/admin/import-orders", icon: Download, label: "استيراد الطلبات" },
