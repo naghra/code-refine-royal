@@ -292,6 +292,88 @@ serve(async (req) => {
       }
 
       // Other synthetic sections (statistics, purchases) keep old behavior.
+      // ====== Statistics (per-product performance) ======
+      if (sectionKey === "statistics") {
+        // Try a dedicated statistics endpoint first; fall back to deriving
+        // per-product stats from leads if the endpoint is not exposed.
+        const candidates = [
+          "/api/v2/seller/statistics",
+          "/api/v2/seller/products/statistics",
+          "/api/v2/seller/dashboard/statistics",
+        ];
+        let statsItems: any[] = [];
+        let lastStatus = 200;
+        for (const p of candidates) {
+          const url = `${COD_NETWORK_HOST}${p}?${dateQ}${dateQ ? "&" : ""}per_page=200`;
+          const res = await fetch(url, { method: "GET", headers: authHeaders });
+          lastStatus = res.status;
+          if (!res.ok) continue;
+          const j = await res.json().catch(() => ({}));
+          const items: any[] = Array.isArray(j?.data) ? j.data : [];
+          if (items.length > 0) {
+            statsItems = items;
+            break;
+          }
+        }
+
+        // Fallback: derive per-product stats by aggregating leads grouped by SKU.
+        if (statsItems.length === 0) {
+          const leads = await fetchAllPages("/api/v2/seller/leads", dateQ, 30);
+          const map = new Map<string, any>();
+          for (const l of leads) {
+            const sku =
+              l?.product_sku ||
+              l?.sku ||
+              l?.product?.sku ||
+              (Array.isArray(l?.products) && l.products[0]?.sku) ||
+              "—";
+            const name =
+              l?.product_name ||
+              l?.product?.name ||
+              (Array.isArray(l?.products) && l.products[0]?.name) ||
+              "—";
+            const statusVal = String(
+              (l?.status && (l.status.code || l.status.label)) || l?.status || "",
+            ).toLowerCase();
+            const row =
+              map.get(sku) ||
+              {
+                sku,
+                name,
+                total_lead_count: 0,
+                confirmed_leads_count: 0,
+                delivered_leads_count: 0,
+                confirmed_lead_rate: 0,
+                delivered_lead_rate: 0,
+              };
+            row.total_lead_count += 1;
+            if (statusVal.includes("confirm")) row.confirmed_leads_count += 1;
+            if (statusVal.includes("deliver")) row.delivered_leads_count += 1;
+            map.set(sku, row);
+          }
+          for (const r of map.values()) {
+            r.confirmed_lead_rate = r.total_lead_count
+              ? Math.round((r.confirmed_leads_count / r.total_lead_count) * 1000) / 10
+              : 0;
+            r.delivered_lead_rate = r.total_lead_count
+              ? Math.round((r.delivered_leads_count / r.total_lead_count) * 1000) / 10
+              : 0;
+          }
+          statsItems = Array.from(map.values()).sort(
+            (a, b) => b.total_lead_count - a.total_lead_count,
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            success: true,
+            status: lastStatus,
+            data: { items: statsItems, total: statsItems.length },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       if (SYNTHETIC_SECTIONS[sectionKey]) {
         const { source, status: defaultStatus } = SYNTHETIC_SECTIONS[sectionKey];
         const params = new URLSearchParams();
