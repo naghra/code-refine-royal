@@ -44,6 +44,29 @@ serve(async (req) => {
       });
     }
 
+    // Probe multiple candidate paths to find which ones the API actually serves.
+    if (action === "probe") {
+      const candidates: string[] = body.paths || [];
+      const results = await Promise.all(
+        candidates.map(async (p: string) => {
+          try {
+            const res = await fetch(`${COD_NETWORK_HOST}${p}`, {
+              method: "GET",
+              headers: authHeaders,
+            });
+            const text = await res.text();
+            let preview = text.slice(0, 200);
+            return { path: p, status: res.status, ok: res.ok, preview };
+          } catch (e) {
+            return { path: p, status: 0, ok: false, preview: String(e) };
+          }
+        }),
+      );
+      return new Response(JSON.stringify({ success: true, results }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     if (action === "get_products") {
       // Fetch ALL pages of products
       const allProducts: any[] = [];
