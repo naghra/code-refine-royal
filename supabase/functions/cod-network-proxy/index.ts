@@ -21,8 +21,7 @@ serve(async (req) => {
     const { action, api_token, order_data } = body;
 
     if (!api_token) {
-      return new Response(JSON.stringify({ success: false, error: "Missing API token" }), {
-        status: 400,
+      return new Response(JSON.stringify({ success: false, status: 400, error: "Missing API token" }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -460,14 +459,12 @@ serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ success: false, error: "Unknown action" }), {
-      status: 400,
+    return new Response(JSON.stringify({ success: false, status: 400, error: "Unknown action" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("cod-network-proxy error:", err);
-    return new Response(JSON.stringify({ success: false, error: String(err) }), {
-      status: 500,
+    return new Response(JSON.stringify({ success: false, status: 500, error: String(err) }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
