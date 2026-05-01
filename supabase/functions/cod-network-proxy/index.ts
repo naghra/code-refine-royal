@@ -149,6 +149,13 @@ serve(async (req) => {
       if (t) out.set("date_to", t);
       return out.toString();
     };
+    const getDateRange = (q?: string): { from: string; to: string } | null => {
+      if (!q) return null;
+      const u = new URLSearchParams(q);
+      const from = u.get("date_from") || u.get("from");
+      const to = u.get("date_to") || u.get("to");
+      return from && to ? { from, to } : null;
+    };
     const countOnly = async (path: string, extra: string): Promise<number> => {
       const url = `${COD_NETWORK_HOST}${path}?${extra}${extra ? "&" : ""}limit=1&per_page=1`;
       const res = await fetch(url, { method: "GET", headers: authHeaders });
@@ -160,7 +167,7 @@ serve(async (req) => {
       const out: any[] = [];
       let page = 1;
       while (page <= maxPages) {
-        const url = `${COD_NETWORK_HOST}${path}?${extra}${extra ? "&" : ""}per_page=200&page=${page}`;
+        const url = `${COD_NETWORK_HOST}${path}?${extra}${extra ? "&" : ""}limit=500&page=${page}`;
         const res = await fetch(url, { method: "GET", headers: authHeaders });
         if (!res.ok) break;
         const j = await res.json().catch(() => ({}));
@@ -168,6 +175,41 @@ serve(async (req) => {
         out.push(...items);
         const pag = j?.meta?.pagination;
         if (!pag || pag.current_page >= pag.total_pages || items.length === 0) break;
+        page++;
+      }
+      return out;
+    };
+    const dateOnly = (v: any): string => String(v || "").slice(0, 10);
+    const itemDate = (it: any, fields: string[]): string => {
+      for (const f of fields) {
+        const d = dateOnly(it?.[f]);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+      }
+      return "";
+    };
+    const fetchItemsByEventDate = async (
+      statusQuery: string,
+      range: { from: string; to: string } | null,
+      dateFields: string[],
+      maxPages = 60,
+    ): Promise<any[]> => {
+      if (!range) return fetchAllPages("/api/v2/seller/orders", statusQuery, maxPages);
+      const out: any[] = [];
+      let page = 1;
+      while (page <= maxPages) {
+        const url = `${COD_NETWORK_HOST}/api/v2/seller/orders?${statusQuery}&limit=500&page=${page}`;
+        const res = await fetch(url, { method: "GET", headers: authHeaders });
+        if (!res.ok) break;
+        const j = await res.json().catch(() => ({}));
+        const items: any[] = Array.isArray(j?.data) ? j.data : [];
+        for (const it of items) {
+          const d = itemDate(it, dateFields);
+          if (d >= range.from && d <= range.to) out.push(it);
+        }
+        const dated = items.map((it) => itemDate(it, dateFields)).filter(Boolean);
+        const allOlder = dated.length > 0 && dated.every((d) => d < range.from);
+        const pag = j?.meta?.pagination;
+        if (!pag || pag.current_page >= pag.total_pages || items.length === 0 || allOlder) break;
         page++;
       }
       return out;
