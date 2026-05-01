@@ -137,10 +137,133 @@ serve(async (req) => {
       purchases: { source: "/api/v2/seller/orders" },
     };
 
+    // -----------------------------------------------------------
+    // Helpers used by synthetic dashboards.
+    // -----------------------------------------------------------
+    const buildDateQuery = (q?: string): string => {
+      if (!q) return "";
+      const u = new URLSearchParams(q);
+      const out = new URLSearchParams();
+      const f = u.get("date_from") || u.get("from");
+      const t = u.get("date_to") || u.get("to");
+      if (f) out.set("date_from", f);
+      if (t) out.set("date_to", t);
+      return out.toString();
+    };
+    const countOnly = async (path: string, extra: string): Promise<number> => {
+      const url = `${COD_NETWORK_HOST}${path}?${extra}${extra ? "&" : ""}limit=1&per_page=1`;
+      const res = await fetch(url, { method: "GET", headers: authHeaders });
+      if (!res.ok) return 0;
+      const j = await res.json().catch(() => ({}));
+      return Number(j?.meta?.pagination?.total) || 0;
+    };
+    const fetchAllPages = async (path: string, extra: string, maxPages = 25): Promise<any[]> => {
+      const out: any[] = [];
+      let page = 1;
+      while (page <= maxPages) {
+        const url = `${COD_NETWORK_HOST}${path}?${extra}${extra ? "&" : ""}per_page=200&page=${page}`;
+        const res = await fetch(url, { method: "GET", headers: authHeaders });
+        if (!res.ok) break;
+        const j = await res.json().catch(() => ({}));
+        const items: any[] = Array.isArray(j?.data) ? j.data : [];
+        out.push(...items);
+        const pag = j?.meta?.pagination;
+        if (!pag || pag.current_page >= pag.total_pages || items.length === 0) break;
+        page++;
+      }
+      return out;
+    };
+    const num = (v: any) => {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    };
+
     if (action === "get_section" && body.section) {
       const sectionKey = body.section as string;
+      const dateQ = buildDateQuery(typeof body.query === "string" ? body.query : "");
 
-      // Synthetic section: fetch from a real endpoint and shape the payload.
+      // ====== Confirmed Dashboard (Leads) ======
+      if (sectionKey === "confirmed_dashboard") {
+        const leadStatuses = [
+          { key: "total_leads_count", label: "Total leads", q: "" },
+          { key: "total_new_leads_count", label: "New leads", q: "status=new" },
+          { key: "total_confirmed_leads_count", label: "Confirmed", q: "status=confirmed" },
+          { key: "total_processing_leads_count", label: "Processing", q: "status=processing" },
+          { key: "total_no_reply_leads_count", label: "No reply", q: "status=no_reply" },
+          { key: "total_canceled_leads_count", label: "Cancelled", q: "status=cancelled" },
+          { key: "total_wrong_leads_count", label: "Wrong", q: "status=wrong" },
+          { key: "total_expired_leads_count", label: "Expired", q: "status=expired" },
+          { key: "total_call_later_scheduled_leads_count", label: "Call later", q: "status=call_later" },
+        ];
+        const counts = await Promise.all(
+          leadStatuses.map((s) =>
+            countOnly("/api/v2/seller/leads", [s.q, dateQ].filter(Boolean).join("&")),
+          ),
+        );
+        const stats: Record<string, number> = {};
+        leadStatuses.forEach((s, i) => (stats[s.key] = counts[i]));
+        return new Response(
+          JSON.stringify({ success: true, status: 200, data: { data: stats } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // ====== Delivered Dashboard (Orders) ======
+      if (sectionKey === "delivered_dashboard") {
+        // Status counts (all in parallel — uses meta.total only, fast).
+        const statuses = [
+          { key: "shipped_orders", q: "status=8" },         // Pending = shipped/in transit
+          { key: "processing_orders", q: "status=2" },      // Assigned
+          { key: "delivered_orders", q: "status=delivered" },
+          { key: "returned_orders", q: "status=5" },        // Return
+        ];
+        const [counts, deliveredItems] = await Promise.all([
+          Promise.all(
+            statuses.map((s) =>
+              countOnly("/api/v2/seller/orders", [s.q, dateQ].filter(Boolean).join("&")),
+            ),
+          ),
+          // Pull delivered orders to compute money fields.
+          fetchAllPages(
+            "/api/v2/seller/orders",
+            ["status=delivered", dateQ].filter(Boolean).join("&"),
+            25,
+          ),
+        ]);
+
+        const sumBy = (k: string) => deliveredItems.reduce((s, it) => s + num(it?.[k]), 0);
+        const sales = sumBy("total");
+        const shipping_cost = sumBy("shipping_fees");
+        const delivery_cost = sumBy("delivery_fees");
+        // VAT estimate (most countries 0 unless API exposes it)
+        const vat = deliveredItems.reduce((s, it) => s + num(it?.vat) + num(it?.tax), 0);
+        // COD fees: typically a % of total. Use field if present, otherwise 5% of sales as fallback.
+        const cod_fees =
+          deliveredItems.reduce((s, it) => s + num(it?.cod_fees) + num(it?.cod_fee), 0) ||
+          Math.round(sales * 0.05 * 100) / 100;
+
+        const stats = {
+          shipped_orders: counts[0],
+          processing_orders: counts[1],
+          delivered_orders: counts[2],
+          returned_orders: counts[3],
+          sales: Math.round(sales * 100) / 100,
+          shipping_cost: Math.round(shipping_cost * 100) / 100,
+          delivery_cost: Math.round(delivery_cost * 100) / 100,
+          vat: Math.round(vat * 100) / 100,
+          cod_fees,
+          // Profit = sales − (shipping + delivery + vat + cod_fees)
+          profits:
+            Math.round((sales - shipping_cost - delivery_cost - vat - cod_fees) * 100) /
+            100,
+        };
+        return new Response(
+          JSON.stringify({ success: true, status: 200, data: { data: stats } }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Other synthetic sections (statistics, purchases) keep old behavior.
       if (SYNTHETIC_SECTIONS[sectionKey]) {
         const { source, status: defaultStatus } = SYNTHETIC_SECTIONS[sectionKey];
         const params = new URLSearchParams();
