@@ -142,9 +142,18 @@ serve(async (req) => {
       // Synthetic section: fetch from a real endpoint and shape the payload.
       if (SYNTHETIC_SECTIONS[sectionKey]) {
         const { source, filterStatus } = SYNTHETIC_SECTIONS[sectionKey];
-        const url = filterStatus && filterStatus.length
-          ? `${COD_NETWORK_HOST}${source}?search=status:${filterStatus.join(",")}&limit=100`
-          : `${COD_NETWORK_HOST}${source}?limit=100`;
+        const params = new URLSearchParams();
+        if (filterStatus && filterStatus.length) {
+          params.set("search", `status:${filterStatus.join(",")}`);
+        }
+        params.set("limit", "100");
+        // Forward optional date filters from the client.
+        if (typeof body.query === "string" && body.query.length) {
+          for (const [k, v] of new URLSearchParams(body.query)) {
+            params.set(k, v);
+          }
+        }
+        const url = `${COD_NETWORK_HOST}${source}?${params.toString()}`;
         const res = await fetch(url, { method: "GET", headers: authHeaders });
         const raw = await res.json().catch(() => ({}));
         const items: any[] = Array.isArray(raw?.data) ? raw.data : [];
