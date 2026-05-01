@@ -330,6 +330,11 @@ export default function AdminLayout() {
     return () => clearInterval(interval);
   }, [isAuthenticated]);
 
+  // Auto-open CodNetwork submenu when on any of its routes
+  useEffect(() => {
+    if (location.pathname.startsWith("/admin/cod-network")) setCodNetOpen(true);
+  }, [location.pathname]);
+
   // Close dropdowns on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
