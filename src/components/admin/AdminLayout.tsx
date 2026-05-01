@@ -455,10 +455,19 @@ export default function AdminLayout() {
           {/* Nav items */}
           <nav className="relative z-10 flex-1 py-3 space-y-0.5 px-2.5 overflow-y-auto">
             {navItems.map((item, index) => (
+              <React.Fragment key={item.to}>
               <NavLink
                 key={item.to}
                 to={item.to}
-                onClick={() => setSidebarOpen(false)}
+                onClick={(e) => {
+                  if ((item as any).hasChildren && !collapsed) {
+                    // Toggle submenu instead of navigating away
+                    e.preventDefault();
+                    setCodNetOpen((v) => !v);
+                    return;
+                  }
+                  setSidebarOpen(false);
+                }}
                 className={({ isActive }) =>
                   `group relative flex items-center gap-3 rounded-[14px] text-[13px] font-medium transition-all duration-300 ease-out ${
                     collapsed ? "justify-center px-2 py-3" : "px-3.5 py-2.5"
@@ -503,7 +512,7 @@ export default function AdminLayout() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.05 }}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 flex-1"
                       >
                         {(item as any).customLabel ? <CodFormLogo size="sm" variant="dark" /> : item.label}
                         {(item as any).badge && (
@@ -516,11 +525,57 @@ export default function AdminLayout() {
                             {(item as any).badge}
                           </span>
                         )}
+                        {(item as any).hasChildren && (
+                          <ChevronDown
+                            className={`w-3.5 h-3.5 ml-auto transition-transform duration-200 ${
+                              codNetOpen ? "rotate-180" : ""
+                            } text-foreground/40`}
+                          />
+                        )}
                       </motion.span>
                     )}
                   </>
                 )}
               </NavLink>
+
+              {/* CodNetwork submenu */}
+              {(item as any).hasChildren && !collapsed && (
+                <AnimatePresence initial={false}>
+                  {codNetOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-0.5 mr-3 pr-3 border-r border-black/[0.06] space-y-0.5">
+                        {COD_SECTIONS.map((s) => {
+                          const SubIcon = s.icon;
+                          return (
+                            <NavLink
+                              key={s.key}
+                              to={`/admin/cod-network/${s.key}`}
+                              onClick={() => setSidebarOpen(false)}
+                              className={({ isActive }) =>
+                                `group flex items-center gap-2.5 rounded-[10px] px-2.5 py-1.5 text-[12px] transition-all ${
+                                  isActive
+                                    ? "text-foreground font-semibold bg-black/[0.05]"
+                                    : "text-foreground/55 hover:text-foreground/80 hover:bg-black/[0.03]"
+                                }`
+                              }
+                            >
+                              <SubIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                              <span className="truncate">{s.label}</span>
+                            </NavLink>
+                          );
+                        })}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              )}
+              </React.Fragment>
             ))}
           </nav>
 
