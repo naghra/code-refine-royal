@@ -81,6 +81,81 @@ serve(async (req) => {
       });
     }
 
+    // ============================================================
+    // V2 Network Dashboard — generic GET passthrough for any V2 path
+    // ============================================================
+    // Maps a logical "section" key to a V2 endpoint path.
+    const SECTION_PATHS: Record<string, string> = {
+      confirmed_dashboard: "/dashboard/confirmed",
+      delivered_dashboard: "/dashboard/delivered",
+      source_requests: "/source-requests",
+      purchases: "/purchases",
+      marketplace_products: "/marketplace/products",
+      products: "/products",
+      drop_products: "/drop-products",
+      stocks: "/stocks",
+      leads: "/leads",
+      orders: "/orders",
+      statistics: "/statistics",
+      stores: "/stores",
+      invoices: "/invoices",
+    };
+
+    if (action === "get_section" && body.section) {
+      const path = SECTION_PATHS[body.section as string];
+      if (!path) {
+        return new Response(JSON.stringify({ success: false, error: "Unknown section" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const qs = body.query ? `?${body.query}` : "";
+      const res = await fetch(`${COD_NETWORK_API_BASE}${path}${qs}`, {
+        method: "GET",
+        headers: authHeaders,
+      });
+      const data = await res.json().catch(() => ({}));
+      return new Response(
+        JSON.stringify({ success: res.ok, status: res.status, data }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    // Fetches all sections in parallel and returns counts/totals only.
+    if (action === "get_dashboard") {
+      const sections = Object.entries(SECTION_PATHS);
+      const results = await Promise.all(
+        sections.map(async ([key, path]) => {
+          try {
+            const res = await fetch(`${COD_NETWORK_API_BASE}${path}?per_page=1`, {
+              method: "GET",
+              headers: authHeaders,
+            });
+            const data = await res.json().catch(() => ({}));
+            // Try to extract a meaningful count from common V2 shapes.
+            const total =
+              data?.meta?.pagination?.total ??
+              data?.meta?.total ??
+              data?.total ??
+              (Array.isArray(data?.data) ? data.data.length : null);
+            return {
+              key,
+              ok: res.ok,
+              status: res.status,
+              total,
+              sample: data?.data ?? data ?? null,
+            };
+          } catch (e) {
+            return { key, ok: false, status: 0, total: null, error: String(e) };
+          }
+        }),
+      );
+      return new Response(
+        JSON.stringify({ success: true, sections: results }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     if (action === "get_lead" && body.lead_id) {
       // V2: fetch lead with related order, items, history in one request via include=
       const leadRes = await fetch(
