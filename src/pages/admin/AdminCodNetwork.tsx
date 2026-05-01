@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter, LayoutDashboard, AlertTriangle, Clock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter, LayoutDashboard, AlertTriangle, Clock, Eye, EyeOff, ClipboardPaste, Save } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SECTIONS, type SectionKey } from "@/components/admin/cod-network/sectionConfig";
 import SectionView from "@/components/admin/cod-network/SectionView";
@@ -50,6 +50,8 @@ export default function AdminCodNetwork() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [stockFilter, setStockFilter] = useState<string>("all");
   const [activeSection, setActiveSection] = useState<SectionKey>("confirmed_dashboard");
+  const [showToken, setShowToken] = useState(false);
+  const [savingToken, setSavingToken] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -76,6 +78,45 @@ export default function AdminCodNetwork() {
       toast({ title: "خطأ", description: "فشل الحفظ", variant: "destructive" });
     } else {
       toast({ title: "تم الحفظ بنجاح ✅" });
+    }
+  };
+
+  // Save ONLY the api_token (quick action — useful when pasting a fresh token)
+  const saveTokenOnly = async (token: string) => {
+    setSavingToken(true);
+    // 1) update local state
+    const newSettings = { ...settings, api_token: token };
+    setSettings(newSettings);
+    // 2) re-fetch current value to avoid clobbering other admin's edits
+    const { data: current } = await supabase
+      .from("store_settings")
+      .select("value")
+      .eq("key", "cod_network")
+      .maybeSingle();
+    const merged = { ...(current?.value as any || {}), ...newSettings, api_token: token };
+    const { error } = await supabase
+      .from("store_settings")
+      .upsert({ key: "cod_network", value: merged }, { onConflict: "key" });
+    setSavingToken(false);
+    if (error) {
+      toast({ title: "❌ تعذّر حفظ التوكن", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "✅ تم حفظ التوكن" });
+      setConnected(null); // user should re-test
+    }
+  };
+
+  const pasteToken = async () => {
+    try {
+      const text = (await navigator.clipboard.readText()).trim();
+      if (!text) {
+        toast({ title: "الحافظة فارغة", variant: "destructive" });
+        return;
+      }
+      setSettings((s) => ({ ...s, api_token: text }));
+      toast({ title: "تم اللصق — اضغط حفظ التوكن لتأكيده" });
+    } catch {
+      toast({ title: "تعذّر الوصول إلى الحافظة", variant: "destructive" });
     }
   };
 
@@ -301,14 +342,70 @@ export default function AdminCodNetwork() {
             <Key className="w-4 h-4 text-muted-foreground" />
             API Token (Bearer)
           </label>
-          <Input
-            type="password"
-            dir="ltr"
-            placeholder="أدخل Bearer Token هنا"
-            value={settings.api_token}
-            onChange={(e) => setSettings((s) => ({ ...s, api_token: e.target.value }))}
-            className="font-mono text-sm"
-          />
+          <div className="relative">
+            <Input
+              type="text"
+              dir="ltr"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              name="cod-network-api-token"
+              placeholder="الصق Bearer Token هنا"
+              value={settings.api_token}
+              onChange={(e) =>
+                setSettings((s) => ({ ...s, api_token: e.target.value.trim() }))
+              }
+              className={`font-mono text-sm pr-3 pl-20 ${
+                !showToken && settings.api_token ? "text-transparent caret-foreground" : ""
+              }`}
+              style={
+                !showToken && settings.api_token
+                  ? { textShadow: "0 0 8px hsl(var(--foreground) / 0.6)" }
+                  : undefined
+              }
+            />
+            <div className="absolute inset-y-0 left-1 flex items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setShowToken((v) => !v)}
+                className="w-7 h-7 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground"
+                title={showToken ? "إخفاء" : "إظهار"}
+              >
+                {showToken ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                type="button"
+                onClick={pasteToken}
+                className="w-7 h-7 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground"
+                title="لصق من الحافظة"
+              >
+                <ClipboardPaste className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[11px] text-muted-foreground">
+              عدد الأحرف:{" "}
+              <span className="font-mono font-semibold text-foreground">
+                {settings.api_token?.length || 0}
+              </span>
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => saveTokenOnly(settings.api_token)}
+              disabled={savingToken || !settings.api_token}
+              className="h-8 text-xs bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/30 text-emerald-700 dark:text-emerald-400"
+            >
+              {savingToken ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin ml-1.5" />
+              ) : (
+                <Save className="w-3.5 h-3.5 ml-1.5" />
+              )}
+              حفظ التوكن فقط
+            </Button>
+          </div>
         </div>
 
         {/* Default Country */}
