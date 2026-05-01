@@ -5,7 +5,10 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Upgraded to Seller API V2 (https://developer.cod.network/v2)
+// COD Network V2 API. Paths vary by section, so we use the bare host
+// and let each call specify its own absolute path under the host.
+const COD_NETWORK_HOST = "https://api.cod.network";
+// Legacy seller V1 base — kept for backwards compatibility with leads creation flow.
 const COD_NETWORK_API_BASE = "https://api.cod.network/v2/seller";
 
 serve(async (req) => {
@@ -82,23 +85,22 @@ serve(async (req) => {
     }
 
     // ============================================================
-    // V2 Network Dashboard — generic GET passthrough for any V2 path
+    // V2 Network Dashboard — paths verified against developer.cod.network/v2
     // ============================================================
-    // Maps a logical "section" key to a V2 endpoint path.
     const SECTION_PATHS: Record<string, string> = {
-      confirmed_dashboard: "/dashboard/confirmed",
-      delivered_dashboard: "/dashboard/delivered",
-      source_requests: "/source-requests",
-      purchases: "/purchases",
-      marketplace_products: "/marketplace/products",
-      products: "/products",
-      drop_products: "/drop-products",
-      stocks: "/stocks",
-      leads: "/leads",
-      orders: "/orders",
-      statistics: "/statistics",
-      stores: "/stores",
-      invoices: "/invoices",
+      confirmed_dashboard: "/seller/v2/confirmed-dashboard",
+      delivered_dashboard: "/api/v2/delivered-dashboard",
+      source_requests: "/seller/source-requests",
+      purchases: "/seller/order-requests",
+      marketplace_products: "/seller/marketplace/products",
+      products: "/seller/products",
+      drop_products: "/seller/drop-products",
+      stocks: "/seller/stocks",
+      leads: "/seller/leads",
+      orders: "/seller/orders",
+      statistics: "/seller/v2/products/statistics",
+      stores: "/seller/stores",
+      invoices: "/seller/invoices?include=details",
     };
 
     if (action === "get_section" && body.section) {
@@ -110,7 +112,11 @@ serve(async (req) => {
         });
       }
       const qs = body.query ? `?${body.query}` : "";
-      const res = await fetch(`${COD_NETWORK_API_BASE}${path}${qs}`, {
+      const sep = path.includes("?") ? "&" : "?";
+      const url = body.query
+        ? `${COD_NETWORK_HOST}${path}${sep}${body.query}`
+        : `${COD_NETWORK_HOST}${path}`;
+      const res = await fetch(url, {
         method: "GET",
         headers: authHeaders,
       });
@@ -127,16 +133,22 @@ serve(async (req) => {
       const results = await Promise.all(
         sections.map(async ([key, path]) => {
           try {
-            const res = await fetch(`${COD_NETWORK_API_BASE}${path}?per_page=1`, {
+            const sep = path.includes("?") ? "&" : "?";
+            const res = await fetch(`${COD_NETWORK_HOST}${path}${sep}limit=1`, {
               method: "GET",
               headers: authHeaders,
             });
             const data = await res.json().catch(() => ({}));
             // Try to extract a meaningful count from common V2 shapes.
+            // Dashboard endpoints return totals as direct fields, not arrays.
             const total =
               data?.meta?.pagination?.total ??
               data?.meta?.total ??
               data?.total ??
+              data?.data?.total_leads_count ??
+              data?.data?.total_new_leads_count ??
+              data?.data?.delivered_orders ??
+              data?.data?.shipped_orders ??
               (Array.isArray(data?.data) ? data.data.length : null);
             return {
               key,
