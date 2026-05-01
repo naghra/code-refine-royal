@@ -32,7 +32,13 @@ export default function SectionView({ section, apiToken }: Props) {
       if (res.error) throw res.error;
       setStatus(res.data?.status || null);
       if (!res.data?.success) {
-        setError(`HTTP ${res.data?.status || "ERR"} — قد يحتاج هذا القسم صلاحيات إضافية في حسابك.`);
+        const s = res.data?.status;
+        let msg = `HTTP ${s || "ERR"}`;
+        if (s === 401) msg += " — التوكن غير صالح أو منتهي. تحقق من API Token في الأعلى وأعد الحفظ.";
+        else if (s === 403) msg += " — هذا القسم غير مفعّل لحسابك (يحتاج صلاحية إضافية من COD Network).";
+        else if (s === 404) msg += " — المسار غير موجود في حسابك (قد يكون القسم غير مفعّل).";
+        else msg += " — تعذّر جلب البيانات.";
+        setError(msg);
         setData(null);
       } else {
         setData(res.data?.data);
