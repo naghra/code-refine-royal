@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, AlertCircle, Calendar } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, Calendar, TrendingUp } from "lucide-react";
 import { DASHBOARD_FIELDS, type SectionConfig } from "./sectionConfig";
 
 interface Props {
