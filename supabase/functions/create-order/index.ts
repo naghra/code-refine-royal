@@ -6,11 +6,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const COD_NETWORK_API_BASE = "https://api.cod.network/v1/seller";
+// Upgraded to Seller API V2 (https://developer.cod.network/v2)
+const COD_NETWORK_API_BASE = "https://api.cod.network/v2/seller";
 
+// V2 expects ISO-3166 alpha-2 country codes
 const CURRENCY_COUNTRY_MAP: Record<string, string> = {
-  SAR: "KSA", AED: "ARE", KWD: "KWT", BHD: "BHR", QAR: "QAT",
-  OMR: "OMN", EGP: "EGY", USD: "USA", EUR: "DEU", GBP: "GBR",
+  SAR: "SA", AED: "AE", KWD: "KW", BHD: "BH", QAR: "QA",
+  OMR: "OM", EGP: "EG", USD: "US", EUR: "DE", GBP: "GB",
 };
 
 const waitUntil = (promise: Promise<unknown>) => {
@@ -294,7 +296,7 @@ serve(async (req) => {
           }
 
           const effectiveCurrency = productCurrencyCode || storeCurrency;
-          const codCountry = CURRENCY_COUNTRY_MAP[effectiveCurrency] || codConfig.default_country || "KSA";
+          const codCountry = CURRENCY_COUNTRY_MAP[effectiveCurrency] || codConfig.default_country || "SA";
           const codCity = city?.trim() || codConfig.default_city || "N/A";
           const codAddress = address?.trim() || city?.trim() || "N/A";
 
@@ -308,14 +310,12 @@ serve(async (req) => {
             leadItems.push({ sku: "UNKNOWN", price: Number(total), quantity: 1 });
           }
 
+          // V2 /seller/leads payload: name, phone (required), items[].{sku,price,quantity}, country (ISO2), address
           const leadData = {
-            full_name: customer_name,
+            name: customer_name,
             phone: customer_phone,
             country: codCountry,
             address: codAddress,
-            city: codCity,
-            area: codCity,
-            currency: effectiveCurrency,
             items: leadItems,
           };
 
