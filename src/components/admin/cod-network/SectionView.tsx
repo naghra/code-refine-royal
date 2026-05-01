@@ -176,7 +176,10 @@ export default function SectionView({ section, apiToken }: Props) {
 
       {/* Stats view (dashboards) */}
       {section.kind === "stats" && data && (
-        <StatsGrid section={section} payload={data} />
+        <>
+          <StatsGrid section={section} payload={data} />
+          <BreakdownGrid payload={data} />
+        </>
       )}
 
       {/* List view */}
