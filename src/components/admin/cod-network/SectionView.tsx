@@ -73,7 +73,7 @@ export default function SectionView({ section, apiToken }: Props) {
         api_token: apiToken,
       };
       if (supportsDateFilter && range) {
-        body.query = `start_date=${range.from}&end_date=${range.to}`;
+        body.query = `date_from=${range.from}&date_to=${range.to}`;
       }
       const res = await supabase.functions.invoke("cod-network-proxy", {
         body,
