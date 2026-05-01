@@ -463,6 +463,118 @@ export default function AdminCodNetwork() {
         )}
       </motion.div>
 
+      {/* Network Dashboard Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.18 }}
+        className="rounded-2xl border border-border bg-card p-6 space-y-4"
+        style={{ boxShadow: "0 4px 24px rgba(0,0,0,0.06)" }}
+      >
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500/20 to-teal-500/20 flex items-center justify-center">
+              <LayoutDashboard className="w-4 h-4 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Network Dashboard</p>
+              <p className="text-xs text-muted-foreground">
+                إحصائيات شاملة لكل أقسام COD Network V2
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchDashboard}
+            disabled={loadingDashboard || !settings.api_token}
+          >
+            {loadingDashboard ? (
+              <Loader2 className="w-4 h-4 animate-spin ml-2" />
+            ) : (
+              <RefreshCw className="w-4 h-4 ml-2" />
+            )}
+            {loadingDashboard ? "جارٍ التحديث..." : "تحديث الإحصائيات"}
+          </Button>
+        </div>
+
+        {!dashboard && !loadingDashboard && (
+          <div className="text-center py-8 text-sm text-muted-foreground">
+            <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-30" />
+            اضغط "تحديث الإحصائيات" لجلب بيانات كل الأقسام
+          </div>
+        )}
+
+        {loadingDashboard && !dashboard && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="h-24 rounded-xl bg-muted/50 animate-pulse" />
+            ))}
+          </div>
+        )}
+
+        {dashboard && (
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            {Object.keys(SECTION_META).map((key) => {
+              const meta = SECTION_META[key];
+              const stat = dashboard.find((s) => s.key === key);
+              const Icon = meta.icon;
+              const ok = stat?.ok;
+              const value = stat?.total;
+              return (
+                <motion.div
+                  key={key}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative overflow-hidden rounded-xl border border-border bg-card p-4 hover:shadow-md transition-shadow"
+                >
+                  <div
+                    className={`absolute -top-6 -left-6 w-20 h-20 rounded-full bg-gradient-to-br ${meta.gradient} opacity-10`}
+                  />
+                  <div className="relative space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div
+                        className={`w-8 h-8 rounded-lg bg-gradient-to-br ${meta.gradient} flex items-center justify-center shadow-sm`}
+                      >
+                        <Icon className="w-4 h-4 text-white" />
+                      </div>
+                      {ok ? (
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                      ) : (
+                        <span
+                          className="text-[10px] text-destructive font-mono"
+                          title={`HTTP ${stat?.status}`}
+                        >
+                          {stat?.status || "ERR"}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground leading-tight">
+                        {meta.label}
+                      </p>
+                      <p className="text-2xl font-bold text-foreground tabular-nums">
+                        {ok && value !== null && value !== undefined
+                          ? value.toLocaleString("en-US")
+                          : ok
+                          ? "—"
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {dashboard && dashboard.some((s) => !s.ok) && (
+          <p className="text-[11px] text-muted-foreground bg-muted/40 rounded-lg p-2.5">
+            ⚠️ بعض الأقسام لم تُرجع بيانات (قد تكون غير مفعّلة في حسابك أو تتطلب صلاحيات إضافية).
+          </p>
+        )}
+      </motion.div>
+
       {/* Info */}
       <motion.div
         initial={{ opacity: 0 }}
