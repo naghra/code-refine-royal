@@ -111,19 +111,22 @@ serve(async (req) => {
     // V2 Network Dashboard — paths verified against developer.cod.network/v2
     // ============================================================
     const SECTION_PATHS: Record<string, string> = {
-      confirmed_dashboard: "/seller/v2/confirmed-dashboard",
-      delivered_dashboard: "/api/v2/delivered-dashboard",
-      source_requests: "/seller/source-requests",
-      purchases: "/seller/order-requests",
-      marketplace_products: "/seller/marketplace/products",
-      products: "/seller/products",
-      drop_products: "/seller/drop-products",
-      stocks: "/seller/stocks",
-      leads: "/seller/leads",
-      orders: "/seller/orders",
-      statistics: "/seller/v2/products/statistics",
-      stores: "/seller/stores",
-      invoices: "/seller/invoices?include=details",
+      // All Seller V2 endpoints live under /v2/seller/...
+      // Verified via probe: /v2/seller/products returns 401 (auth issue, path exists),
+      // while /seller/products and /seller/v2/products return 404.
+      confirmed_dashboard: "/v2/seller/confirmed-dashboard",
+      delivered_dashboard: "/v2/seller/delivered-dashboard",
+      source_requests: "/v2/seller/source-requests",
+      purchases: "/v2/seller/order-requests",
+      marketplace_products: "/v2/seller/marketplace/products",
+      products: "/v2/seller/products",
+      drop_products: "/v2/seller/drop-products",
+      stocks: "/v2/seller/stocks",
+      leads: "/v2/seller/leads",
+      orders: "/v2/seller/orders",
+      statistics: "/v2/seller/products/statistics",
+      stores: "/v2/seller/stores",
+      invoices: "/v2/seller/invoices?include=details",
     };
 
     if (action === "get_section" && body.section) {
