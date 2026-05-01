@@ -129,9 +129,10 @@ serve(async (req) => {
     };
 
     // Synthetic sections that aggregate data from real endpoints.
-    const SYNTHETIC_SECTIONS: Record<string, { source: string; filterStatus?: string[] }> = {
-      confirmed_dashboard: { source: "/api/v2/seller/leads", filterStatus: ["confirmed"] },
-      delivered_dashboard: { source: "/api/v2/seller/orders", filterStatus: ["delivered"] },
+    // status values are passed as the V2 API expects: ?status=<text>
+    const SYNTHETIC_SECTIONS: Record<string, { source: string; status?: string }> = {
+      confirmed_dashboard: { source: "/api/v2/seller/leads", status: "confirmed" },
+      delivered_dashboard: { source: "/api/v2/seller/orders", status: "delivered" },
       statistics: { source: "/api/v2/seller/products" },
       purchases: { source: "/api/v2/seller/orders" },
     };
@@ -141,43 +142,76 @@ serve(async (req) => {
 
       // Synthetic section: fetch from a real endpoint and shape the payload.
       if (SYNTHETIC_SECTIONS[sectionKey]) {
-        const { source, filterStatus } = SYNTHETIC_SECTIONS[sectionKey];
+        const { source, status: defaultStatus } = SYNTHETIC_SECTIONS[sectionKey];
         const params = new URLSearchParams();
-        if (filterStatus && filterStatus.length) {
-          params.set("search", `status:${filterStatus.join(",")}`);
-        }
-        params.set("limit", "100");
-        // Forward optional date filters from the client.
+        // Forward optional filters from the client (date_from/date_to/status/...).
         if (typeof body.query === "string" && body.query.length) {
           for (const [k, v] of new URLSearchParams(body.query)) {
             params.set(k, v);
           }
         }
-        const url = `${COD_NETWORK_HOST}${source}?${params.toString()}`;
-        const res = await fetch(url, { method: "GET", headers: authHeaders });
-        const raw = await res.json().catch(() => ({}));
-        const items: any[] = Array.isArray(raw?.data) ? raw.data : [];
-        const total = raw?.meta?.pagination?.total ?? items.length;
-        // Build a simple stats object from items.
-        const sumBy = (k: string) =>
-          items.reduce((s, it) => s + (Number(it?.[k]) || 0), 0);
+        if (defaultStatus && !params.has("status")) {
+          params.set("status", defaultStatus);
+        }
+        params.set("per_page", "200");
+
+        // Fetch up to N pages so totals/sums reflect the real dataset, not just page 1.
+        const MAX_PAGES = 25; // 25 * 200 = 5000 rows max — enough for monthly stats
+        const aggregated: any[] = [];
+        let page = 1;
+        let totalFromMeta = 0;
+        let lastStatus = 200;
+        let lastOk = true;
+        while (page <= MAX_PAGES) {
+          params.set("page", String(page));
+          const url = `${COD_NETWORK_HOST}${source}?${params.toString()}`;
+          const res = await fetch(url, { method: "GET", headers: authHeaders });
+          lastStatus = res.status;
+          lastOk = res.ok;
+          const raw = await res.json().catch(() => ({}));
+          const items: any[] = Array.isArray(raw?.data) ? raw.data : [];
+          aggregated.push(...items);
+          const pag = raw?.meta?.pagination;
+          totalFromMeta = pag?.total ?? aggregated.length;
+          if (!pag || pag.current_page >= pag.total_pages || items.length === 0) break;
+          page++;
+        }
+
+        const num = (v: any) => {
+          const n = Number(v);
+          return Number.isFinite(n) ? n : 0;
+        };
+        const sumBy = (k: string) => aggregated.reduce((s, it) => s + num(it?.[k]), 0);
+        const statusLabel = (it: any) => {
+          const s = it?.status;
+          if (s && typeof s === "object") return s.label || s.code || "unknown";
+          return s || "unknown";
+        };
         const stats = {
-          total,
-          shown: items.length,
+          total: totalFromMeta,
+          shown: aggregated.length,
+          pages_fetched: page,
           total_amount: sumBy("total") || sumBy("amount") || sumBy("price"),
-          shipping_cost: sumBy("shipping_cost"),
+          total_amount_usd: sumBy("total_usd"),
+          shipping_cost: sumBy("shipping_fees") || sumBy("shipping_cost"),
+          delivery_fees: sumBy("delivery_fees"),
           profit: sumBy("profit") || sumBy("seller_profit"),
-          by_status: items.reduce((acc: Record<string, number>, it) => {
-            const s = String(it?.status || "unknown");
+          by_status: aggregated.reduce((acc: Record<string, number>, it) => {
+            const s = String(statusLabel(it));
             acc[s] = (acc[s] || 0) + 1;
+            return acc;
+          }, {}),
+          by_country: aggregated.reduce((acc: Record<string, number>, it) => {
+            const c = String(it?.customer_country_name || it?.country || "unknown");
+            acc[c] = (acc[c] || 0) + 1;
             return acc;
           }, {}),
         };
         return new Response(
           JSON.stringify({
-            success: res.ok,
-            status: res.status,
-            data: { data: stats, items },
+            success: lastOk,
+            status: lastStatus,
+            data: { data: stats, items: aggregated.slice(0, 100) },
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
