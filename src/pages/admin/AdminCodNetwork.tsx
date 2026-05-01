@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter, LayoutDashboard } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Send, Key, Globe, MapPin, RefreshCw, Package, Box, Search, Filter, LayoutDashboard, AlertTriangle, Clock } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SECTIONS, type SectionKey } from "@/components/admin/cod-network/sectionConfig";
 import SectionView from "@/components/admin/cod-network/SectionView";
@@ -146,8 +146,75 @@ export default function AdminCodNetwork() {
     return matchesSearch && matchesStatus && matchesStock;
   });
 
+  // Decode JWT exp claim to compute remaining days. Returns null if not a JWT.
+  const tokenInfo = (() => {
+    const t = settings.api_token?.trim();
+    if (!t || !t.includes(".")) return null;
+    try {
+      const payload = JSON.parse(
+        atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")),
+      );
+      const exp = Number(payload?.exp);
+      if (!exp) return null;
+      const expMs = exp * 1000;
+      const daysLeft = Math.floor((expMs - Date.now()) / (1000 * 60 * 60 * 24));
+      return { expMs, daysLeft, expDate: new Date(expMs) };
+    } catch {
+      return null;
+    }
+  })();
+
+  const showTokenAlert =
+    tokenInfo !== null && tokenInfo.daysLeft <= 7;
+  const expired = tokenInfo !== null && tokenInfo.daysLeft < 0;
+
   return (
     <div className="max-w-2xl mx-auto space-y-6" dir="rtl">
+      {/* Token expiry banner */}
+      {showTokenAlert && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`relative overflow-hidden rounded-2xl border p-4 flex items-start gap-3 ${
+            expired
+              ? "border-destructive/40 bg-destructive/10"
+              : "border-amber-500/40 bg-amber-50 dark:bg-amber-950/30"
+          }`}
+        >
+          <div
+            className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center ${
+              expired ? "bg-destructive text-white" : "bg-amber-500 text-white"
+            }`}
+          >
+            {expired ? <AlertTriangle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-sm font-bold ${expired ? "text-destructive" : "text-amber-900 dark:text-amber-200"}`}>
+              {expired
+                ? "⚠️ انتهت صلاحية API Token"
+                : tokenInfo!.daysLeft === 0
+                ? "⏰ صلاحية API Token تنتهي اليوم"
+                : `⏰ تبقى ${tokenInfo!.daysLeft} ${tokenInfo!.daysLeft === 1 ? "يوم" : "أيام"} على انتهاء صلاحية API Token`}
+            </p>
+            <p className="text-xs mt-1 text-foreground/70">
+              تاريخ الانتهاء:{" "}
+              <span dir="ltr" className="font-mono">
+                {tokenInfo!.expDate.toLocaleString("en-GB", {
+                  timeZone: "Asia/Riyadh",
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}
+              </span>
+            </p>
+            <p className="text-xs mt-1 text-foreground/70">
+              {expired
+                ? "أنشئ توكناً جديداً من حساب COD Network والصقه في الحقل أدناه ثم اضغط حفظ."
+                : "جدّد التوكن من لوحة COD Network قبل انتهاء صلاحيته لتفادي توقف اللوحات."}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
