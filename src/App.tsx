@@ -29,6 +29,7 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminPages from "./pages/admin/AdminPages";
 import AdminGoogleSheets from "./pages/admin/AdminGoogleSheets";
 import AdminCodNetwork from "./pages/admin/AdminCodNetwork";
+import AdminCodNetworkSection from "./pages/admin/AdminCodNetworkSection";
 import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
 import AdminImportOrders from "./pages/admin/AdminImportOrders";
 import AdminAppStore from "./pages/admin/AdminAppStore";
@@ -84,6 +85,7 @@ const App = () => (
             <Route path="cod-form" element={<AdminCodForm />} />
             <Route path="google-sheets" element={<AdminGoogleSheets />} />
             <Route path="cod-network" element={<AdminCodNetwork />} />
+            <Route path="cod-network/:section" element={<AdminCodNetworkSection />} />
             <Route path="whatsapp" element={<AdminWhatsApp />} />
             <Route path="import-orders" element={<AdminImportOrders />} />
             <Route path="app-store" element={<AdminAppStore />} />
