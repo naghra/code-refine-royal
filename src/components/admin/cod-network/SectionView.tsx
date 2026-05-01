@@ -176,10 +176,7 @@ export default function SectionView({ section, apiToken }: Props) {
 
       {/* Stats view (dashboards) */}
       {section.kind === "stats" && data && (
-        <>
-          <StatsGrid section={section} payload={data} />
-          <BreakdownGrid payload={data} />
-        </>
+        <StatsGrid section={section} payload={data} />
       )}
 
       {/* List view */}
@@ -195,9 +192,10 @@ function StatsGrid({ section, payload }: { section: SectionConfig; payload: any 
     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {fields.map((f) => {
         const raw = root?.[f.key];
-        const value = typeof raw === "number" ? raw : raw ?? 0;
-        const display =
-          typeof value === "number" ? value.toLocaleString("en-US") : String(value);
+        const value = typeof raw === "number" ? raw : Number(raw) || 0;
+        const display = Number.isInteger(value)
+          ? value.toLocaleString("en-US")
+          : value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
         return (
           <motion.div
             key={f.key}
