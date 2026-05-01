@@ -8,8 +8,8 @@ const corsHeaders = {
 // COD Network V2 API. Paths vary by section, so we use the bare host
 // and let each call specify its own absolute path under the host.
 const COD_NETWORK_HOST = "https://api.cod.network";
-// Legacy seller V1 base — kept for backwards compatibility with leads creation flow.
-const COD_NETWORK_API_BASE = "https://api.cod.network/v2/seller";
+// V2 seller base. Verified working paths use the /api/v2/seller/* prefix.
+const COD_NETWORK_API_BASE = "https://api.cod.network/api/v2/seller";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -112,25 +112,69 @@ serve(async (req) => {
     // ============================================================
     const SECTION_PATHS: Record<string, string> = {
       // All Seller V2 endpoints live under /v2/seller/...
-      // Verified via probe: /v2/seller/products returns 401 (auth issue, path exists),
-      // while /seller/products and /seller/v2/products return 404.
-      confirmed_dashboard: "/v2/seller/confirmed-dashboard",
-      delivered_dashboard: "/v2/seller/delivered-dashboard",
-      source_requests: "/v2/seller/source-requests",
-      purchases: "/v2/seller/order-requests",
-      marketplace_products: "/v2/seller/marketplace/products",
-      products: "/v2/seller/products",
-      drop_products: "/v2/seller/drop-products",
-      stocks: "/v2/seller/stocks",
-      leads: "/v2/seller/leads",
-      orders: "/v2/seller/orders",
-      statistics: "/v2/seller/products/statistics",
-      stores: "/v2/seller/stores",
-      invoices: "/v2/seller/invoices?include=details",
+      // Verified via direct probe against api.cod.network.
+      // Confirmed working: products, orders, leads, stocks, invoices,
+      // stores, source-requests, marketplace/products, drop-products.
+      // Dashboards/statistics/purchases endpoints are NOT exposed by V2 API,
+      // so we synthesize them from leads/orders below.
+      source_requests: "/api/v2/seller/source-requests",
+      marketplace_products: "/api/v2/seller/marketplace/products",
+      products: "/api/v2/seller/products",
+      drop_products: "/api/v2/seller/drop-products",
+      stocks: "/api/v2/seller/stocks",
+      leads: "/api/v2/seller/leads",
+      orders: "/api/v2/seller/orders",
+      stores: "/api/v2/seller/stores",
+      invoices: "/api/v2/seller/invoices?include=details",
+    };
+
+    // Synthetic sections that aggregate data from real endpoints.
+    const SYNTHETIC_SECTIONS: Record<string, { source: string; filterStatus?: string[] }> = {
+      confirmed_dashboard: { source: "/api/v2/seller/leads", filterStatus: ["confirmed"] },
+      delivered_dashboard: { source: "/api/v2/seller/orders", filterStatus: ["delivered"] },
+      statistics: { source: "/api/v2/seller/products" },
+      purchases: { source: "/api/v2/seller/orders" },
     };
 
     if (action === "get_section" && body.section) {
-      const path = SECTION_PATHS[body.section as string];
+      const sectionKey = body.section as string;
+
+      // Synthetic section: fetch from a real endpoint and shape the payload.
+      if (SYNTHETIC_SECTIONS[sectionKey]) {
+        const { source, filterStatus } = SYNTHETIC_SECTIONS[sectionKey];
+        const url = filterStatus && filterStatus.length
+          ? `${COD_NETWORK_HOST}${source}?search=status:${filterStatus.join(",")}&limit=100`
+          : `${COD_NETWORK_HOST}${source}?limit=100`;
+        const res = await fetch(url, { method: "GET", headers: authHeaders });
+        const raw = await res.json().catch(() => ({}));
+        const items: any[] = Array.isArray(raw?.data) ? raw.data : [];
+        const total = raw?.meta?.pagination?.total ?? items.length;
+        // Build a simple stats object from items.
+        const sumBy = (k: string) =>
+          items.reduce((s, it) => s + (Number(it?.[k]) || 0), 0);
+        const stats = {
+          total,
+          shown: items.length,
+          total_amount: sumBy("total") || sumBy("amount") || sumBy("price"),
+          shipping_cost: sumBy("shipping_cost"),
+          profit: sumBy("profit") || sumBy("seller_profit"),
+          by_status: items.reduce((acc: Record<string, number>, it) => {
+            const s = String(it?.status || "unknown");
+            acc[s] = (acc[s] || 0) + 1;
+            return acc;
+          }, {}),
+        };
+        return new Response(
+          JSON.stringify({
+            success: res.ok,
+            status: res.status,
+            data: { data: stats, items },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      const path = SECTION_PATHS[sectionKey];
       if (!path) {
         return new Response(JSON.stringify({ success: false, error: "Unknown section" }), {
           status: 400,
