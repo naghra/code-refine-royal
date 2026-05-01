@@ -323,3 +323,104 @@ function renderCell(v: any): string {
   if (typeof v === "number") return v.toLocaleString("en-US");
   return String(v);
 }
+
+const PRESETS: { key: RangePreset; label: string }[] = [
+  { key: "today", label: "Today" },
+  { key: "yesterday", label: "Yesterday" },
+  { key: "last7", label: "Last 7 Days" },
+  { key: "this_month", label: "This Month" },
+  { key: "last_month", label: "Last Month" },
+  { key: "all", label: "All Time" },
+];
+
+function DateRangeFilter({
+  preset,
+  setPreset,
+  customFrom,
+  setCustomFrom,
+  customTo,
+  setCustomTo,
+  onApply,
+  onReset,
+  loading,
+}: {
+  preset: RangePreset;
+  setPreset: (p: RangePreset) => void;
+  customFrom: string;
+  setCustomFrom: (v: string) => void;
+  customTo: string;
+  setCustomTo: (v: string) => void;
+  onApply: () => void;
+  onReset: () => void;
+  loading: boolean;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card p-3 space-y-3" dir="ltr">
+      <div className="flex flex-wrap items-center gap-2">
+        {PRESETS.map((p) => {
+          const active = preset === p.key;
+          return (
+            <button
+              key={p.key}
+              onClick={() => setPreset(p.key)}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium border transition-all ${
+                active
+                  ? "text-white border-transparent bg-gradient-to-br from-orange-400 to-orange-500 shadow-sm"
+                  : "text-foreground/70 bg-background border-border hover:bg-muted"
+              }`}
+            >
+              <Calendar className="w-3.5 h-3.5" />
+              {p.label}
+            </button>
+          );
+        })}
+
+        {/* Custom range input */}
+        <button
+          onClick={() => setPreset("custom")}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium border transition-all ${
+            preset === "custom"
+              ? "text-foreground border-foreground/30 bg-muted"
+              : "text-muted-foreground bg-background border-border hover:bg-muted"
+          }`}
+        >
+          <Calendar className="w-3.5 h-3.5" />
+          <input
+            type="date"
+            value={customFrom}
+            onChange={(e) => { setCustomFrom(e.target.value); setPreset("custom"); }}
+            className="bg-transparent outline-none w-[110px] text-xs"
+          />
+          <span className="text-muted-foreground">to</span>
+          <input
+            type="date"
+            value={customTo}
+            onChange={(e) => { setCustomTo(e.target.value); setPreset("custom"); }}
+            className="bg-transparent outline-none w-[110px] text-xs"
+          />
+        </button>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={onReset}
+          disabled={loading}
+          className="bg-rose-500/90 hover:bg-rose-500 text-white border-transparent hover:text-white"
+        >
+          Reset
+        </Button>
+        <Button
+          size="sm"
+          onClick={onApply}
+          disabled={loading || (preset === "custom" && (!customFrom || !customTo))}
+          className="bg-gradient-to-br from-orange-400 to-orange-500 hover:brightness-110 text-white"
+        >
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin ml-1.5" /> : null}
+          Apply Filters
+        </Button>
+      </div>
+    </div>
+  );
+}
