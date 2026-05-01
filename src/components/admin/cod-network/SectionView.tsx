@@ -353,12 +353,15 @@ function formatValue(v: number, format?: "money" | "int"): string {
 function ListView({ section, payload }: { section: SectionConfig; payload: any }) {
   const items: any[] = Array.isArray(payload?.data)
     ? payload.data
+    : Array.isArray(payload?.items)
+    ? payload.items
     : Array.isArray(payload)
     ? payload
     : [];
   const total =
     payload?.meta?.pagination?.total ??
     payload?.meta?.total ??
+    payload?.data?.total ??
     items.length;
 
   if (items.length === 0) {
