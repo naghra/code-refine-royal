@@ -1,14 +1,43 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, RefreshCw, AlertCircle } from "lucide-react";
+import { Loader2, RefreshCw, AlertCircle, Calendar } from "lucide-react";
 import { DASHBOARD_FIELDS, type SectionConfig } from "./sectionConfig";
 
 interface Props {
   section: SectionConfig;
   apiToken: string;
+}
+
+type RangePreset = "today" | "yesterday" | "last7" | "this_month" | "last_month" | "all" | "custom";
+
+function ymd(d: Date): string {
+  // Riyadh (UTC+3) date as YYYY-MM-DD
+  const r = new Date(d.getTime() + 3 * 60 * 60 * 1000);
+  return r.toISOString().slice(0, 10);
+}
+
+function rangeFor(preset: RangePreset, custom?: { from: string; to: string }) {
+  const now = new Date();
+  const today = ymd(now);
+  const y = new Date(now); y.setUTCDate(y.getUTCDate() - 1);
+  const seven = new Date(now); seven.setUTCDate(seven.getUTCDate() - 6);
+  const monthStart = new Date(now); monthStart.setUTCDate(1);
+  const lastMonthStart = new Date(monthStart); lastMonthStart.setUTCMonth(lastMonthStart.getUTCMonth() - 1);
+  const lastMonthEnd = new Date(monthStart); lastMonthEnd.setUTCDate(0);
+  switch (preset) {
+    case "today": return { from: today, to: today };
+    case "yesterday": return { from: ymd(y), to: ymd(y) };
+    case "last7": return { from: ymd(seven), to: today };
+    case "this_month": return { from: ymd(monthStart), to: today };
+    case "last_month": return { from: ymd(lastMonthStart), to: ymd(lastMonthEnd) };
+    case "all": return null;
+    case "custom":
+      if (custom?.from && custom?.to) return { from: custom.from, to: custom.to };
+      return null;
+  }
 }
 
 export default function SectionView({ section, apiToken }: Props) {
@@ -18,7 +47,19 @@ export default function SectionView({ section, apiToken }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<number | null>(null);
 
-  const load = async () => {
+  // Date range filter — only meaningful for dashboards.
+  const supportsDateFilter =
+    section.key === "confirmed_dashboard" || section.key === "delivered_dashboard";
+  const [preset, setPreset] = useState<RangePreset>("today");
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo, setCustomTo] = useState("");
+
+  const activeRange = useMemo(
+    () => rangeFor(preset, { from: customFrom, to: customTo }),
+    [preset, customFrom, customTo],
+  );
+
+  const load = async (range: { from: string; to: string } | null = activeRange) => {
     if (!apiToken) {
       toast({ title: "أدخل API Token أولاً", variant: "destructive" });
       return;
@@ -26,8 +67,16 @@ export default function SectionView({ section, apiToken }: Props) {
     setLoading(true);
     setError(null);
     try {
+      const body: Record<string, unknown> = {
+        action: "get_section",
+        section: section.key,
+        api_token: apiToken,
+      };
+      if (supportsDateFilter && range) {
+        body.query = `start_date=${range.from}&end_date=${range.to}`;
+      }
       const res = await supabase.functions.invoke("cod-network-proxy", {
-        body: { action: "get_section", section: section.key, api_token: apiToken },
+        body,
       });
       if (res.error) throw res.error;
       setStatus(res.data?.status || null);
@@ -50,7 +99,7 @@ export default function SectionView({ section, apiToken }: Props) {
   };
 
   useEffect(() => {
-    load();
+    load(activeRange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [section.key]);
 
@@ -77,7 +126,7 @@ export default function SectionView({ section, apiToken }: Props) {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => load(activeRange)} disabled={loading}>
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin ml-2" />
           ) : (
@@ -86,6 +135,27 @@ export default function SectionView({ section, apiToken }: Props) {
           تحديث
         </Button>
       </div>
+
+      {/* Date range filter (Confirmed / Delivered dashboards only) */}
+      {supportsDateFilter && (
+        <DateRangeFilter
+          preset={preset}
+          setPreset={setPreset}
+          customFrom={customFrom}
+          setCustomFrom={setCustomFrom}
+          customTo={customTo}
+          setCustomTo={setCustomTo}
+          onApply={() => load(activeRange)}
+          onReset={() => {
+            setPreset("today");
+            setCustomFrom("");
+            setCustomTo("");
+            const r = rangeFor("today");
+            load(r);
+          }}
+          loading={loading}
+        />
+      )}
 
       {/* Error */}
       {error && (
