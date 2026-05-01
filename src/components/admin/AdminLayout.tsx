@@ -290,9 +290,13 @@ function AdminLogin() {
 export default function AdminLayout() {
   const { isAdmin, loading, isAuthenticated } = useAdmin();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
+  const [codNetOpen, setCodNetOpen] = React.useState(
+    () => typeof window !== "undefined" && window.location.pathname.startsWith("/admin/cod-network")
+  );
   const [adminEmail, setAdminEmail] = React.useState("");
   const [showNotifications, setShowNotifications] = React.useState(false);
   const [showProfile, setShowProfile] = React.useState(false);
