@@ -251,25 +251,12 @@ serve(async (req) => {
 
       // ====== Delivered Dashboard (Orders) ======
       if (sectionKey === "delivered_dashboard") {
-        // Status counts (all in parallel — uses meta.total only, fast).
-        const statuses = [
-          { key: "shipped_orders", q: "status=8" },         // Pending = shipped/in transit
-          { key: "processing_orders", q: "status=2" },      // Assigned
-          { key: "delivered_orders", q: "status=delivered" },
-          { key: "returned_orders", q: "status=5" },        // Return
-        ];
-        const [counts, deliveredItems] = await Promise.all([
-          Promise.all(
-            statuses.map((s) =>
-              countOnly("/api/v2/seller/orders", [s.q, dateQ].filter(Boolean).join("&")),
-            ),
-          ),
-          // Pull delivered orders to compute money fields.
-          fetchAllPages(
-            "/api/v2/seller/orders",
-            ["status=delivered", dateQ].filter(Boolean).join("&"),
-            25,
-          ),
+        const range = getDateRange(typeof body.query === "string" ? body.query : "");
+        const [shippedItems, processingItems, deliveredItems, returnedItems] = await Promise.all([
+          fetchItemsByEventDate("status=8", range, ["updated_at", "shipped_at", "created_at"], 60),
+          fetchItemsByEventDate("status=2", range, ["updated_at", "created_at"], 60),
+          fetchItemsByEventDate("status=delivered", range, ["delivered_at", "updated_at"], 60),
+          fetchItemsByEventDate("status=5", range, ["returned_at", "updated_at"], 60),
         ]);
 
         const sumBy = (k: string) => deliveredItems.reduce((s, it) => s + num(it?.[k]), 0);
@@ -284,10 +271,10 @@ serve(async (req) => {
           Math.round(sales * 0.05 * 100) / 100;
 
         const stats = {
-          shipped_orders: counts[0],
-          processing_orders: counts[1],
-          delivered_orders: counts[2],
-          returned_orders: counts[3],
+          shipped_orders: shippedItems.length,
+          processing_orders: processingItems.length,
+          delivered_orders: deliveredItems.length,
+          returned_orders: returnedItems.length,
           sales: Math.round(sales * 100) / 100,
           shipping_cost: Math.round(shipping_cost * 100) / 100,
           delivery_cost: Math.round(delivery_cost * 100) / 100,
