@@ -214,7 +214,8 @@ const CARD_META: Record<
   cod_fees:          { accent: "from-fuchsia-500 to-pink-600", ring: "ring-fuchsia-500/30", bar: "from-fuchsia-500 to-pink-500", format: "money", denom: "sales" },
 };
 
-const DEFAULT_META = {
+type CardMeta = { accent: string; ring: string; bar: string; denom?: string; format?: "money" | "int" };
+const DEFAULT_META: CardMeta = {
   accent: "from-slate-500 to-slate-700",
   ring: "ring-slate-500/20",
   bar: "from-slate-500 to-slate-600",
