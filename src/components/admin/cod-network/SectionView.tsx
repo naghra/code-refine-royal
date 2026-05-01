@@ -219,6 +219,45 @@ function StatsGrid({ section, payload }: { section: SectionConfig; payload: any 
   );
 }
 
+function BreakdownGrid({ payload }: { payload: any }) {
+  const root = payload?.data ?? payload ?? {};
+  const byStatus: Record<string, number> = root?.by_status || {};
+  const byCountry: Record<string, number> = root?.by_country || {};
+  const statusEntries = Object.entries(byStatus).sort((a, b) => b[1] - a[1]);
+  const countryEntries = Object.entries(byCountry).sort((a, b) => b[1] - a[1]);
+  if (statusEntries.length === 0 && countryEntries.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {statusEntries.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-bold text-muted-foreground mb-3">حسب الحالة</p>
+          <div className="space-y-2">
+            {statusEntries.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between text-sm">
+                <span className="text-foreground">{k}</span>
+                <span className="font-bold tabular-nums">{Number(v).toLocaleString("en-US")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {countryEntries.length > 0 && (
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs font-bold text-muted-foreground mb-3">حسب الدولة</p>
+          <div className="space-y-2">
+            {countryEntries.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between text-sm">
+                <span className="text-foreground">{k}</span>
+                <span className="font-bold tabular-nums">{Number(v).toLocaleString("en-US")}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ListView({ section, payload }: { section: SectionConfig; payload: any }) {
   const items: any[] = Array.isArray(payload?.data)
     ? payload.data
