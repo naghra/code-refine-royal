@@ -457,7 +457,6 @@ export default function AdminLayout() {
             {navItems.map((item, index) => (
               <React.Fragment key={item.to}>
               <NavLink
-                key={item.to}
                 to={item.to}
                 onClick={(e) => {
                   if ((item as any).hasChildren && !collapsed) {
