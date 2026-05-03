@@ -457,6 +457,41 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+      // Special-case: invoices — fetch ALL pages so the UI shows every invoice.
+      if (sectionKey === "invoices") {
+        const basePath = "/api/v2/seller/invoices";
+        const all: any[] = [];
+        let page = 1;
+        let lastStatus = 200;
+        let lastOk = true;
+        let total = 0;
+        const maxPages = 50;
+        while (page <= maxPages) {
+          const params = new URLSearchParams(body.query || "");
+          params.set("include", "details");
+          params.set("limit", "100");
+          params.set("page", String(page));
+          const url = `${COD_NETWORK_HOST}${basePath}?${params.toString()}`;
+          const res = await fetch(url, { method: "GET", headers: authHeaders });
+          lastStatus = res.status;
+          lastOk = res.ok;
+          const j = await res.json().catch(() => ({}));
+          const items: any[] = Array.isArray(j?.data) ? j.data : [];
+          all.push(...items);
+          const pag = j?.meta?.pagination;
+          total = pag?.total ?? all.length;
+          if (!pag || pag.current_page >= pag.total_pages || items.length === 0) break;
+          page++;
+        }
+        return new Response(
+          JSON.stringify({
+            success: lastOk,
+            status: lastStatus,
+            data: { data: all, meta: { pagination: { total, count: all.length } } },
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       const qs = body.query ? `?${body.query}` : "";
       const sep = path.includes("?") ? "&" : "?";
       const url = body.query
