@@ -28,19 +28,35 @@ function fmtDate(v: any): string {
   return s.slice(0, 10);
 }
 
-function statusBadge(raw: any) {
+function statusLabel(raw: any): string {
+  if (raw && typeof raw === "object") return String(raw.label ?? raw.code ?? "");
+  return String(raw ?? "");
+}
+
+function isPaidStatus(raw: any): boolean {
+  if (raw && typeof raw === "object") {
+    const code = Number(raw.code);
+    if (Number.isFinite(code)) return code !== 1; // 1 = Unpaid in V2 API
+    const lbl = String(raw.label ?? "").toLowerCase();
+    return lbl.includes("paid") && !lbl.includes("unpaid");
+  }
   const s = String(raw ?? "").toLowerCase();
-  const isPaid = s.includes("paid") && !s.includes("unpaid");
-  if (isPaid) {
+  return s.includes("paid") && !s.includes("unpaid");
+}
+
+function statusBadge(raw: any) {
+  const paid = isPaidStatus(raw);
+  const label = statusLabel(raw) || (paid ? "Paid" : "Unpaid");
+  if (paid) {
     return (
       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 ring-1 ring-emerald-500/30">
-        <CheckCircle2 className="w-3 h-3" /> Paid
+        <CheckCircle2 className="w-3 h-3" /> {label}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 ring-1 ring-amber-500/30">
-      <Clock className="w-3 h-3" /> Unpaid
+      <Clock className="w-3 h-3" /> {label}
     </span>
   );
 }
@@ -61,8 +77,8 @@ export default function InvoicesView({ payload }: Props) {
 
   // KPIs
   const totalAmount = items.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
-  const paidItems = items.filter((r) => String(r?.status ?? "").toLowerCase().includes("paid") && !String(r?.status ?? "").toLowerCase().includes("unpaid"));
-  const unpaidItems = items.filter((r) => !paidItems.includes(r));
+  const paidItems = items.filter((r) => isPaidStatus(r?.status));
+  const unpaidItems = items.filter((r) => !isPaidStatus(r?.status));
   const paidAmount = paidItems.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
   const unpaidAmount = unpaidItems.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
 
