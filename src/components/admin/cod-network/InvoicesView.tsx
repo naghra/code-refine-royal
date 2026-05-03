@@ -139,7 +139,7 @@ export default function InvoicesView({ payload }: Props) {
           const subTotal = row?.sub_total ?? row?.total;
           const startAt = row?.start_at;
           const endAt = row?.end_at;
-          const url = row?.pdf_url || row?.url || row?.invoice_url;
+          const url = row?.invoice_pdf || row?.pdf_url || row?.url || row?.invoice_url;
           return (
             <motion.div
               key={id || i}
