@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, AlertCircle, Calendar, TrendingUp } from "lucide-react";
 import { DASHBOARD_FIELDS, type SectionConfig } from "./sectionConfig";
+import InvoicesView from "./InvoicesView";
 
 interface Props {
   section: SectionConfig;
@@ -180,7 +181,11 @@ export default function SectionView({ section, apiToken }: Props) {
       )}
 
       {/* List view */}
-      {section.kind === "list" && data && <ListView section={section} payload={data} />}
+      {section.kind === "list" && data && (
+        section.key === "invoices"
+          ? <InvoicesView payload={data} />
+          : <ListView section={section} payload={data} />
+      )}
     </motion.div>
   );
 }
