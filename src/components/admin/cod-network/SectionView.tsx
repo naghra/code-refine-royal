@@ -60,11 +60,6 @@ export default function SectionView({ section, apiToken }: Props) {
     [preset, customFrom, customTo],
   );
 
-  const cacheKey = useMemo(() => {
-    const r = supportsDateFilter && activeRange ? `${activeRange.from}_${activeRange.to}` : "all";
-    return `cod_net_cache::${section.key}::${r}`;
-  }, [section.key, supportsDateFilter, activeRange]);
-
   const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 
   const load = async (
