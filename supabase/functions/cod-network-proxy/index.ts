@@ -294,47 +294,64 @@ serve(async (req) => {
       // Other synthetic sections (statistics, purchases) keep old behavior.
       // ====== Statistics (per-product performance) ======
       if (sectionKey === "statistics") {
-        // Try a dedicated statistics endpoint first; fall back to deriving
-        // per-product stats from leads if the endpoint is not exposed.
-        const candidates = [
-          "/api/v2/seller/statistics",
-          "/api/v2/seller/products/statistics",
-          "/api/v2/seller/dashboard/statistics",
-        ];
-        let statsItems: any[] = [];
+        // The COD V2 API does not expose a per-product statistics endpoint
+        // (probed: /statistics, /products/statistics, /dashboard/statistics
+        // all return 404). We aggregate from leads in the chosen date range.
+        // The lead `products` field is a comma-separated string of
+        // "Product Name/SKU" entries — we parse it to bucket per SKU.
+        const range = getDateRange(typeof body.query === "string" ? body.query : "");
+        // Hard cap pages to keep the function fast. With limit=500 this is
+        // 15k leads max, plenty for any selected day/week/month.
+        const MAX_PAGES = 30;
+        const leads: any[] = [];
+        let page = 1;
         let lastStatus = 200;
-        for (const p of candidates) {
-          const url = `${COD_NETWORK_HOST}${p}?${dateQ}${dateQ ? "&" : ""}per_page=200`;
+        while (page <= MAX_PAGES) {
+          const url = `${COD_NETWORK_HOST}/api/v2/seller/leads?${dateQ}${dateQ ? "&" : ""}limit=500&page=${page}`;
           const res = await fetch(url, { method: "GET", headers: authHeaders });
           lastStatus = res.status;
-          if (!res.ok) continue;
+          if (!res.ok) break;
           const j = await res.json().catch(() => ({}));
           const items: any[] = Array.isArray(j?.data) ? j.data : [];
-          if (items.length > 0) {
-            statsItems = items;
-            break;
-          }
+          leads.push(...items);
+          const pag = j?.meta?.pagination;
+          if (!pag || pag.current_page >= pag.total_pages || items.length === 0) break;
+          // If no date range was given, stop after first page to avoid huge pulls.
+          if (!range && page >= 1) break;
+          page++;
         }
 
-        // Fallback: derive per-product stats by aggregating leads grouped by SKU.
-        if (statsItems.length === 0) {
-          const leads = await fetchAllPages("/api/v2/seller/leads", dateQ, 30);
-          const map = new Map<string, any>();
-          for (const l of leads) {
-            const sku =
-              l?.product_sku ||
-              l?.sku ||
-              l?.product?.sku ||
-              (Array.isArray(l?.products) && l.products[0]?.sku) ||
-              "—";
-            const name =
-              l?.product_name ||
-              l?.product?.name ||
-              (Array.isArray(l?.products) && l.products[0]?.name) ||
-              "—";
-            const statusVal = String(
-              (l?.status && (l.status.code || l.status.label)) || l?.status || "",
-            ).toLowerCase();
+        const parseSkus = (l: any): { sku: string; name: string }[] => {
+          const raw = l?.products;
+          if (!raw) return [];
+          // Some accounts return arrays of objects; handle both shapes.
+          if (Array.isArray(raw)) {
+            return raw
+              .map((p: any) => ({
+                sku: String(p?.sku || "—"),
+                name: String(p?.name || p?.title || "—"),
+              }))
+              .filter((p) => p.sku !== "—");
+          }
+          if (typeof raw === "string") {
+            return raw.split(",").map((part) => {
+              const seg = part.trim();
+              const idx = seg.lastIndexOf("/");
+              if (idx === -1) return { sku: seg || "—", name: seg || "—" };
+              return { sku: seg.slice(idx + 1).trim(), name: seg.slice(0, idx).trim() };
+            }).filter((p) => p.sku);
+          }
+          return [];
+        };
+
+        const map = new Map<string, any>();
+        for (const l of leads) {
+          const statusVal = String(
+            (l?.status && (l.status.code || l.status.label)) || l?.status || "",
+          ).toLowerCase();
+          const isConfirmed = statusVal.includes("confirm");
+          const isDelivered = statusVal.includes("deliver");
+          for (const { sku, name } of parseSkus(l)) {
             const row =
               map.get(sku) ||
               {
@@ -347,28 +364,32 @@ serve(async (req) => {
                 delivered_lead_rate: 0,
               };
             row.total_lead_count += 1;
-            if (statusVal.includes("confirm")) row.confirmed_leads_count += 1;
-            if (statusVal.includes("deliver")) row.delivered_leads_count += 1;
+            if (isConfirmed) row.confirmed_leads_count += 1;
+            if (isDelivered) row.delivered_leads_count += 1;
             map.set(sku, row);
           }
-          for (const r of map.values()) {
-            r.confirmed_lead_rate = r.total_lead_count
-              ? Math.round((r.confirmed_leads_count / r.total_lead_count) * 1000) / 10
-              : 0;
-            r.delivered_lead_rate = r.total_lead_count
-              ? Math.round((r.delivered_leads_count / r.total_lead_count) * 1000) / 10
-              : 0;
-          }
-          statsItems = Array.from(map.values()).sort(
-            (a, b) => b.total_lead_count - a.total_lead_count,
-          );
         }
+        for (const r of map.values()) {
+          r.confirmed_lead_rate = r.total_lead_count
+            ? Math.round((r.confirmed_leads_count / r.total_lead_count) * 1000) / 10
+            : 0;
+          r.delivered_lead_rate = r.total_lead_count
+            ? Math.round((r.delivered_leads_count / r.total_lead_count) * 1000) / 10
+            : 0;
+        }
+        const statsItems = Array.from(map.values()).sort(
+          (a, b) => b.total_lead_count - a.total_lead_count,
+        );
 
         return new Response(
           JSON.stringify({
             success: true,
             status: lastStatus,
-            data: { items: statsItems, total: statsItems.length },
+            data: {
+              items: statsItems,
+              total: statsItems.length,
+              meta: { leads_scanned: leads.length, range },
+            },
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
