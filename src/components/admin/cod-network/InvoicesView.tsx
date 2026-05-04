@@ -75,12 +75,13 @@ export default function InvoicesView({ payload }: Props) {
     payload?.data?.total ??
     items.length;
 
-  // KPIs
-  const totalAmount = items.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
+  // KPIs — use profits instead of sub_total / total charge
+  const profitOf = (r: any) => num(r?.profits ?? r?.profit ?? r?.net_profit);
+  const totalAmount = items.reduce((acc, r) => acc + profitOf(r), 0);
   const paidItems = items.filter((r) => isPaidStatus(r?.status));
   const unpaidItems = items.filter((r) => !isPaidStatus(r?.status));
-  const paidAmount = paidItems.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
-  const unpaidAmount = unpaidItems.reduce((acc, r) => acc + num(r?.sub_total ?? r?.total), 0);
+  const paidAmount = paidItems.reduce((acc, r) => acc + profitOf(r), 0);
+  const unpaidAmount = unpaidItems.reduce((acc, r) => acc + profitOf(r), 0);
 
   if (items.length === 0) {
     return (
@@ -136,7 +137,7 @@ export default function InvoicesView({ payload }: Props) {
         {items.map((row, i) => {
           const id = row?.id ?? "—";
           const ref = row?.reference ?? "—";
-          const subTotal = row?.sub_total ?? row?.total;
+          const profits = profitOf(row);
           const startAt = row?.start_at;
           const endAt = row?.end_at;
           const url = row?.invoice_pdf || row?.pdf_url || row?.url || row?.invoice_url;
@@ -167,9 +168,9 @@ export default function InvoicesView({ payload }: Props) {
 
               <div className="relative mt-4 flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Sub total</p>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Profits</p>
                   <p className="text-2xl font-black text-foreground tabular-nums leading-none mt-1">
-                    {fmtMoney(subTotal)}
+                    {fmtMoney(profits)}
                   </p>
                 </div>
                 <div className="text-left">
