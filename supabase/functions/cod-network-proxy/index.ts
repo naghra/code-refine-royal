@@ -347,7 +347,7 @@ serve(async (req) => {
         const map = new Map<string, any>();
         for (const l of leads) {
           const statusVal = String(
-            (l?.status && (l.status.code || l.status.label)) || l?.status || "",
+            (l?.status && (l.status.label || l.status.code)) || l?.status || "",
           ).toLowerCase();
           const isConfirmed = statusVal.includes("confirm");
           const isDelivered = statusVal.includes("deliver");
