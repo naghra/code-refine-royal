@@ -60,10 +60,37 @@ export default function SectionView({ section, apiToken }: Props) {
     [preset, customFrom, customTo],
   );
 
-  const load = async (range: { from: string; to: string } | null = activeRange) => {
+  const cacheKey = useMemo(() => {
+    const r = supportsDateFilter && activeRange ? `${activeRange.from}_${activeRange.to}` : "all";
+    return `cod_net_cache::${section.key}::${r}`;
+  }, [section.key, supportsDateFilter, activeRange]);
+
+  const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+
+  const load = async (
+    range: { from: string; to: string } | null = activeRange,
+    opts: { force?: boolean } = {},
+  ) => {
     if (!apiToken) {
       toast({ title: "أدخل API Token أولاً", variant: "destructive" });
       return;
+    }
+    const key = supportsDateFilter && range
+      ? `cod_net_cache::${section.key}::${range.from}_${range.to}`
+      : `cod_net_cache::${section.key}::all`;
+    if (!opts.force) {
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Date.now() - parsed.t < CACHE_TTL_MS) {
+            setData(parsed.data);
+            setStatus(parsed.status ?? null);
+            setError(null);
+            return;
+          }
+        }
+      } catch {}
     }
     setLoading(true);
     setError(null);
@@ -92,6 +119,12 @@ export default function SectionView({ section, apiToken }: Props) {
         setData(null);
       } else {
         setData(res.data?.data);
+        try {
+          localStorage.setItem(
+            key,
+            JSON.stringify({ t: Date.now(), data: res.data?.data, status: res.data?.status ?? null }),
+          );
+        } catch {}
       }
     } catch (err: any) {
       setError(String(err?.message || err));
@@ -127,7 +160,7 @@ export default function SectionView({ section, apiToken }: Props) {
             </p>
           </div>
         </div>
-        <Button variant="outline" size="sm" onClick={() => load(activeRange)} disabled={loading}>
+        <Button variant="outline" size="sm" onClick={() => load(activeRange, { force: true })} disabled={loading}>
           {loading ? (
             <Loader2 className="w-4 h-4 animate-spin ml-2" />
           ) : (
@@ -146,13 +179,13 @@ export default function SectionView({ section, apiToken }: Props) {
           setCustomFrom={setCustomFrom}
           customTo={customTo}
           setCustomTo={setCustomTo}
-          onApply={() => load(activeRange)}
+          onApply={() => load(activeRange, { force: true })}
           onReset={() => {
             setPreset("today");
             setCustomFrom("");
             setCustomTo("");
             const r = rangeFor("today");
-            load(r);
+            load(r, { force: true });
           }}
           loading={loading}
         />
