@@ -50,7 +50,9 @@ export default function SectionView({ section, apiToken }: Props) {
 
   // Date range filter — only meaningful for dashboards.
   const supportsDateFilter =
-    section.key === "confirmed_dashboard" || section.key === "delivered_dashboard";
+    section.key === "confirmed_dashboard" ||
+    section.key === "delivered_dashboard" ||
+    section.key === "statistics";
   const [preset, setPreset] = useState<RangePreset>("today");
   const [customFrom, setCustomFrom] = useState("");
   const [customTo, setCustomTo] = useState("");
