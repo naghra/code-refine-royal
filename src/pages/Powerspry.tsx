@@ -1,353 +1,443 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, FlaskConical, Award, Truck, Star, Clock, ChevronDown, CheckCircle2, Activity, Zap, HeartPulse, Lock } from "lucide-react";
-import productImg from "@/assets/powerspry-product-real.png";
-import labImg from "@/assets/powerspry-lab.jpg";
+import productImage from "@/assets/powerspry-product-real.png";
+import productHero from "@/assets/powerspry-lab.jpg";
+import productDiscovery from "@/assets/powerspry-ingredients.jpg";
 import circulationImg from "@/assets/powerspry-circulation.jpg";
-import lifestyleImg from "@/assets/powerspry-lifestyle.jpg";
-import ingredientsImg from "@/assets/powerspry-ingredients.jpg";
 import doctorImg from "@/assets/powerspry-doctor.jpg";
-
-const NAVY = "#0B2545";
-const NAVY_DARK = "#08182F";
-const GOLD = "#C9A84C";
-const GOLD_LIGHT = "#E8C97A";
-
-const testimonials = [
-  { name: "أحمد العتيبي", age: 42, city: "الرياض", text: "بعد أسابيع من الاستخدام لاحظت فرقاً كبيراً، استعدت ثقتي وأدائي تماماً كما كنت في العشرينات." },
-  { name: "خالد الشمري", age: 38, city: "جدة", text: "منتج محترم وتغليف طبي راقي. النتائج بدأت تظهر من الأيام الأولى، أنصح به بقوة." },
-  { name: "سعد القحطاني", age: 45, city: "الدمام", text: "كنت أعاني من ضعف وقلة ثقة، لكن دراغون باور غيّر حياتي الزوجية بشكل لا يصدق." },
-  { name: "ماجد الحربي", age: 50, city: "مكة", text: "تركيبة طبيعية وآمنة، شعرت بفرق واضح في الطاقة والقوة من أول استخدام." },
-  { name: "فهد الدوسري", age: 36, city: "الطائف", text: "جربت كثير من المنتجات بدون نتيجة، هذا المنتج فعلاً مختلف ويستحق كل ريال." },
-  { name: "ناصر العنزي", age: 47, city: "تبوك", text: "زوجتي لاحظت الفرق قبل ما أقولها، الحمدلله رجعت العلاقة أقوى من قبل." },
-  { name: "بدر السبيعي", age: 41, city: "بريدة", text: "الاستخدام سهل والنتائج سريعة. شعرت بثقة أكبر وأداء أطول. شكراً للفريق الطبي." },
-  { name: "عبدالله المطيري", age: 44, city: "أبها", text: "منتج طبي بمواصفات عالية، التوصيل كان سريع والنتائج فاقت التوقعات." },
-];
-
-const faqs = [
-  { q: "هل المنتج آمن؟", a: "نعم، التركيبة طبيعية بالكامل ومصنوعة في معامل طبية معتمدة، خالية من المواد الضارة وتم اختبارها سريرياً للتأكد من سلامتها." },
-  { q: "متى تظهر النتائج؟", a: "تبدأ معظم النتائج بالظهور خلال أيام من الاستخدام المنتظم، وتصل لأفضل أداء بعد 2-4 أسابيع." },
-  { q: "كيف يتم الاستخدام؟", a: "يستخدم البخاخ موضعياً قبل العلاقة بـ 10-15 دقيقة. رجّ العبوة جيداً ثم رش 2-3 بخّات على المنطقة المطلوبة." },
-  { q: "هل يمكن استعماله يومياً؟", a: "نعم، يمكن استخدامه بشكل منتظم بأمان تام، ولا يسبب الإدمان أو الاعتماد." },
-];
+import lifestyleImg from "@/assets/powerspry-lifestyle.jpg";
 
 const Powerspry = () => {
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
-  const [showSticky, setShowSticky] = useState(false);
-  const [stock, setStock] = useState(17);
+  const [timeLeft, setTimeLeft] = useState({ h: 2, m: 47, s: 33 });
+  const [showStickyCta, setShowStickyCta] = useState(false);
 
   useEffect(() => {
-    document.title = "Dragon Power 9000 — استعد قوتك وثقتك من جديد | بخاخ الأداء الطبي";
-    const meta = document.querySelector('meta[name="description"]') || (() => {
-      const m = document.createElement("meta"); m.setAttribute("name", "description"); document.head.appendChild(m); return m;
-    })();
-    meta.setAttribute("content", "دراغون باور 9000: تركيبة طبية متطورة لدعم الانتصاب وتحسين الأداء والمساعدة في التحكم الأفضل. آمن، طبيعي، ونتائج سريعة.");
+    document.title = "تحقيق صحي: Dragon Power 9000 — الحل الطبيعي الذي أعاد القوة والثقة لآلاف الرجال";
 
-    if (!document.getElementById("powerspry-font")) {
+    if (!document.getElementById("ibm-plex-arabic-font")) {
+      const pc1 = document.createElement("link");
+      pc1.rel = "preconnect"; pc1.href = "https://fonts.googleapis.com";
+      document.head.appendChild(pc1);
+      const pc2 = document.createElement("link");
+      pc2.rel = "preconnect"; pc2.href = "https://fonts.gstatic.com"; pc2.crossOrigin = "anonymous";
+      document.head.appendChild(pc2);
       const link = document.createElement("link");
-      link.id = "powerspry-font";
+      link.id = "ibm-plex-arabic-font";
       link.rel = "stylesheet";
-      link.href = "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@400;500;700;900&display=swap";
+      link.href = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;800&display=swap";
       document.head.appendChild(link);
     }
+    const meta = document.querySelector('meta[name="description"]') || (() => {
+      const m = document.createElement("meta");
+      m.setAttribute("name", "description");
+      document.head.appendChild(m);
+      return m;
+    })();
+    meta.setAttribute("content", "تحقيق صحي: بخاخ Dragon Power 9000 الطبيعي يعيد القوة والثقة والتحكم لآلاف الرجال — اكتشف السر الذي يتحدث عنه الجميع.");
 
-    const onScroll = () => setShowSticky(window.scrollY > 700);
+    const t = setInterval(() => {
+      setTimeLeft((p) => {
+        let { h, m, s } = p;
+        s--;
+        if (s < 0) { s = 59; m--; }
+        if (m < 0) { m = 59; h--; }
+        if (h < 0) { h = 0; m = 0; s = 0; }
+        return { h, m, s };
+      });
+    }, 1000);
+
+    const onScroll = () => setShowStickyCta(window.scrollY > 600);
     window.addEventListener("scroll", onScroll, { passive: true });
-    const stockTimer = setInterval(() => setStock(s => Math.max(3, s - (Math.random() > 0.7 ? 1 : 0))), 18000);
-    return () => { window.removeEventListener("scroll", onScroll); clearInterval(stockTimer); };
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
 
-  const ctaTarget = "/order";
+  const today = new Date().toLocaleDateString("ar-EG", { year: "numeric", month: "long", day: "numeric" });
+  const pad = (n: number) => String(n).padStart(2, "0");
 
   return (
-    <div dir="rtl" className="min-h-screen bg-white" style={{ fontFamily: "'Cairo','Tajawal',system-ui,sans-serif", color: NAVY_DARK }}>
-      {/* Top trust bar */}
-      <div className="text-white text-xs sm:text-sm py-2 px-3 text-center" style={{ background: NAVY_DARK }}>
-        <span className="inline-flex items-center gap-2">
-          <ShieldCheck size={14} style={{ color: GOLD }} />
-          منتج طبي معتمد · شحن سريع · الدفع عند الاستلام
-        </span>
-      </div>
-
-      {/* Header */}
-      <header className="border-b" style={{ borderColor: "#EAEAEA" }}>
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div dir="rtl" className="min-h-screen bg-white text-neutral-900 pb-24" style={{ fontFamily: "'IBM Plex Sans Arabic', system-ui, sans-serif" }}>
+      {/* Top news bar */}
+      <header className="border-b border-neutral-200">
+        <div className="text-white text-xs sm:text-sm py-1.5 px-4 text-center font-semibold tracking-wide" style={{ background: "#0B2545" }}>
+          🩺 تحقيق طبي حصري — صحة الرجل · {today}
+        </div>
+        <div className="max-w-3xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-md flex items-center justify-center" style={{ background: NAVY }}>
-              <span className="text-xs font-black" style={{ color: GOLD }}>DP9</span>
+            <div className="text-white font-black px-2 py-1 text-sm tracking-tight" style={{ background: "#0B2545" }}>
+              <span style={{ color: "#C9A84C" }}>HEALTH</span>
             </div>
-            <div className="leading-tight">
-              <div className="font-black text-sm" style={{ color: NAVY }}>DRAGON POWER 9000</div>
-              <div className="text-[10px] tracking-widest" style={{ color: GOLD }}>PHARMACEUTICAL GRADE</div>
-            </div>
+            <span className="font-bold text-neutral-800 text-sm sm:text-base">المجلة الطبية</span>
           </div>
-          <div className="hidden sm:flex items-center gap-1 text-xs text-neutral-600">
-            <Award size={14} style={{ color: GOLD }} /> توصية المختصين
-          </div>
+          <div className="text-xs text-neutral-500 hidden sm:block">قسم: صحة الرجل · تحقيق</div>
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)` }}>
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "radial-gradient(circle at 20% 20%, #fff 0, transparent 40%), radial-gradient(circle at 80% 80%, #fff 0, transparent 40%)" }} />
-        <div className="max-w-5xl mx-auto px-4 py-10 sm:py-16 grid md:grid-cols-2 gap-8 items-center relative">
-          <div className="text-white order-2 md:order-1">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold mb-4" style={{ background: "rgba(201,168,76,0.15)", color: GOLD_LIGHT, border: `1px solid ${GOLD}` }}>
-              <FlaskConical size={12} /> تركيبة طبية مرخصة
-            </div>
-            <h1 className="text-3xl sm:text-5xl font-black leading-tight mb-4">
-              استعد <span style={{ color: GOLD }}>قوتك</span> وثقتك من جديد
-            </h1>
-            <p className="text-base sm:text-lg text-white/85 leading-relaxed mb-6">
-              تركيبة متطورة تساعد على دعم الانتصاب، تحسين الأداء، والمساعدة في التحكم الأفضل أثناء العلاقة.
-            </p>
-            <div className="flex flex-wrap gap-3 mb-6 text-xs sm:text-sm">
-              {["طبيعي 100%", "نتائج سريعة", "آمن طبياً"].map(t => (
-                <span key={t} className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full" style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.15)" }}>
-                  <CheckCircle2 size={14} style={{ color: GOLD }} /> {t}
-                </span>
-              ))}
-            </div>
-            <a href={ctaTarget} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 py-4 rounded-xl font-black text-base shadow-2xl transition-transform active:scale-95" style={{ background: `linear-gradient(180deg, ${GOLD_LIGHT}, ${GOLD})`, color: NAVY_DARK }}>
-              اكتشف الحل الآن ←
-            </a>
-            <div className="flex items-center gap-4 mt-5 text-xs text-white/70">
-              <div className="flex items-center gap-1"><Lock size={12} /> دفع آمن</div>
-              <div className="flex items-center gap-1"><Truck size={12} /> توصيل سريع</div>
-              <div className="flex items-center gap-1"><ShieldCheck size={12} /> ضمان الجودة</div>
+      <article className="max-w-3xl mx-auto px-4 py-6">
+        <div className="text-xs font-bold mb-2 uppercase tracking-wider" style={{ color: "#C9A84C" }}>تحقيق طبي · صحة الرجل · اكتشاف جديد</div>
+        <h1 className="text-[26px] sm:text-4xl font-black leading-[1.3] mb-3 text-neutral-900">
+          أطباء يكشفون السبب الحقيقي وراء <span style={{ color: "#0B2545" }}>ضعف الانتصاب وسرعة القذف</span>…
+          والحل الطبيعي الذي غيّر حياة آلاف الرجال
+        </h1>
+        <p className="text-base sm:text-lg text-neutral-600 leading-relaxed mb-4">
+          تحقيق طبي خاص يرصد ما يصفه المختصون بـ«الأزمة الصامتة» التي تطارد ملايين الرجال،
+          ويكشف عن بخاخ طبيعي يحمل اسم <strong className="text-neutral-900">«Dragon Power 9000»</strong>
+          أعاد — بحسب المستخدمين — القوة والتحكم والثقة خلال أيام.
+        </p>
+
+        {/* Byline */}
+        <div className="flex items-center justify-between border-y border-neutral-200 py-3 my-4 text-sm text-neutral-600">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white" style={{ background: "#0B2545" }}>د.م</div>
+            <div>
+              <div className="font-bold text-neutral-800">د. محمد الراشد</div>
+              <div className="text-xs">المحرر الطبي · أخصائي صحة الرجل</div>
             </div>
           </div>
-          <div className="order-1 md:order-2 flex justify-center">
-            <div className="relative">
-              <div className="absolute -inset-6 rounded-full opacity-30 blur-3xl" style={{ background: GOLD }} />
-              <img src={productImg} alt="Dragon Power 9000 بخاخ الأداء الطبي" className="relative w-64 sm:w-80 h-auto rounded-2xl shadow-2xl" width={1024} height={1024} />
-            </div>
+          <div className="text-xs text-neutral-500 text-left">
+            <div>{today}</div>
+            <div>⏱ قراءة 5 دقائق</div>
           </div>
         </div>
-      </section>
 
-      {/* Logos / trust */}
-      <section className="border-y py-5" style={{ borderColor: "#EAEAEA", background: "#F8FAFC" }}>
-        <div className="max-w-5xl mx-auto px-4 grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
-          {[
-            { icon: ShieldCheck, t: "معتمد طبياً" },
-            { icon: FlaskConical, t: "مختبر سريرياً" },
-            { icon: Award, t: "جودة صيدلية" },
-            { icon: Truck, t: "شحن لكل المدن" },
-          ].map(({ icon: Icon, t }, i) => (
-            <div key={i} className="flex items-center justify-center gap-2 text-xs sm:text-sm font-semibold" style={{ color: NAVY }}>
-              <Icon size={18} style={{ color: GOLD }} /> {t}
-            </div>
-          ))}
-        </div>
-      </section>
+        {/* Hero */}
+        <figure className="mb-6">
+          <img
+            src={productHero}
+            alt="بخاخ Dragon Power 9000 في مختبر طبي"
+            className="w-full h-56 sm:h-80 object-cover rounded-md"
+            loading="eager"
+          />
+          <figcaption className="text-xs text-neutral-500 mt-2 text-center">
+            بخاخ Dragon Power 9000 — تركيبة عشبية متطورة لدعم الأداء والتحكم.
+          </figcaption>
+        </figure>
 
-      {/* PROBLEM */}
-      <section className="max-w-5xl mx-auto px-4 py-12 sm:py-16">
-        <div className="text-center mb-10">
-          <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>المشكلة الصامتة</div>
-          <h2 className="text-2xl sm:text-4xl font-black" style={{ color: NAVY }}>هل تعاني من إحدى هذه المشاكل؟</h2>
-          <p className="text-neutral-600 mt-3 max-w-2xl mx-auto">أكثر من 65% من الرجال يعانون بصمت ولا يجدون حلاً حقيقياً يعيد لهم ثقتهم.</p>
-        </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { t: "ضعف الانتصاب", d: "صعوبة في الحصول على انتصاب قوي ومستمر." },
-            { t: "سرعة القذف", d: "نهاية مبكرة تُفقد الطرفين متعة العلاقة." },
-            { t: "ضعف الثقة بالنفس", d: "خوف وقلق دائم من خيبة الأمل." },
-            { t: "ضعف الأداء", d: "إرهاق سريع وانخفاض في الطاقة الجنسية." },
-          ].map((p, i) => (
-            <div key={i} className="rounded-2xl p-5 border bg-white shadow-sm hover:shadow-md transition" style={{ borderColor: "#EEF2F7" }}>
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-3" style={{ background: "#FEF3F2" }}>
-                <HeartPulse size={20} style={{ color: "#B42318" }} />
-              </div>
-              <div className="font-bold mb-1" style={{ color: NAVY }}>{p.t}</div>
-              <p className="text-sm text-neutral-600 leading-relaxed">{p.d}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        {/* Opening hook */}
+        <section className="text-[17px] leading-loose space-y-4 text-neutral-800">
+          <p>
+            خلف الأبواب المغلقة، يعيش ملايين الرجال صراعاً صامتاً لا يجرؤون على البوح به:
+            <strong> ضعف انتصاب، نهاية مبكرة، قلق قبل اللحظة الحاسمة، وشعور بالعجز يطاردهم خارج غرفة النوم.</strong>
+            ما يبدأ كموقف عابر سرعان ما يتحول إلى دائرة من الإحباط وفقدان الثقة بالنفس.
+          </p>
+          <p>
+            الإحصاءات الطبية الحديثة تشير إلى أن <strong>أكثر من 6 من كل 10 رجال</strong> فوق سن الثلاثين
+            يعانون من شكل من أشكال ضعف الأداء، ومع ذلك لا يطلب أكثر من 1 من كل 10 منهم أي مساعدة.
+            النتيجة: علاقات تنهار في صمت دون أن يفهم أحد السبب الحقيقي.
+          </p>
+        </section>
 
-      {/* SCIENTIFIC */}
-      <section className="py-14 sm:py-20" style={{ background: "#F8FAFC" }}>
-        <div className="max-w-5xl mx-auto px-4 grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>التفسير العلمي</div>
-            <h2 className="text-2xl sm:text-4xl font-black mb-4" style={{ color: NAVY }}>كيف يعمل دراغون باور 9000؟</h2>
-            <p className="text-neutral-700 leading-relaxed mb-5">
-              تعتمد التركيبة على مكونات نباتية مدروسة سريرياً تساعد على:
-            </p>
-            <ul className="space-y-3">
-              {[
-                { i: Activity, t: "تحسين تدفق الدم", d: "توسيع الأوعية الدموية ودعم وصول الدم بكفاءة عالية." },
-                { i: Zap, t: "تنظيم الحساسية العصبية", d: "تأخير الاستجابة العصبية للمساعدة في التحكم الأفضل." },
-                { i: HeartPulse, t: "دعم الحيوية الذكورية", d: "تعزيز الطاقة والقدرة على التحمل لفترات أطول." },
-              ].map(({ i: Icon, t, d }, k) => (
-                <li key={k} className="flex gap-3">
-                  <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center" style={{ background: NAVY }}>
-                    <Icon size={18} style={{ color: GOLD }} />
-                  </div>
-                  <div>
-                    <div className="font-bold" style={{ color: NAVY }}>{t}</div>
-                    <div className="text-sm text-neutral-600">{d}</div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <img src={circulationImg} alt="رسم توضيحي للدورة الدموية" className="col-span-2 rounded-xl border shadow-sm w-full h-auto" loading="lazy" width={1024} height={768} style={{ borderColor: "#EAEAEA" }} />
-            <img src={labImg} alt="مختبر طبي" className="rounded-xl border shadow-sm w-full h-auto" loading="lazy" width={1024} height={1024} style={{ borderColor: "#EAEAEA" }} />
-            <img src={ingredientsImg} alt="مكونات عشبية فاخرة" className="rounded-xl border shadow-sm w-full h-auto" loading="lazy" width={1024} height={768} style={{ borderColor: "#EAEAEA" }} />
-          </div>
+        {/* Highlight box */}
+        <div className="mt-6 rounded-md p-4 text-[15px] leading-relaxed text-neutral-800" style={{ background: "#FFF8E6", borderRight: "4px solid #C9A84C" }}>
+          💡 <strong>تنبيه طبي:</strong> ضعف الانتصاب وسرعة القذف ليسا «نهاية الرجولة»…
+          بل في الغالب إشارة من جسدك بأن الدورة الدموية أو الاستجابة العصبية تحتاج إلى دعم.
+          الخبر السار: الجسم قادر على استعادة توازنه طبيعياً عند تزويده بالمكونات الصحيحة.
         </div>
-      </section>
 
-      {/* BENEFITS */}
-      <section className="max-w-5xl mx-auto px-4 py-12 sm:py-16">
-        <div className="text-center mb-10">
-          <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>الفوائد</div>
-          <h2 className="text-2xl sm:text-4xl font-black" style={{ color: NAVY }}>ماذا ستلاحظ بعد الاستخدام؟</h2>
+        {/* Problem escalation */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>عندما يتحول الأمر إلى كابوس يومي</h2>
+        <div className="text-[17px] leading-loose space-y-4 text-neutral-800">
+          <p>
+            في البداية يحاول الرجل تجاهل الأمر. يقول: «إرهاق… ضغط عمل… غداً أكون أفضل».
+            لكن مع تكرار المواقف، يبدأ في <strong>تجنّب اللحظات الحميمة</strong>،
+            ويختلق الأعذار، ويخلد للنوم مبكراً قبل أن تأتي زوجته. شيئاً فشيئاً يتسلل البرود إلى العلاقة.
+          </p>
+          <p>الأعراض التي يصفها أغلب الرجال:</p>
+          <ul className="list-disc pr-6 space-y-1" style={{ listStyleType: "disc" }}>
+            <li>ضعف الانتصاب أو عدم الثبات لمدة كافية</li>
+            <li>سرعة القذف ونهاية مبكرة للعلاقة</li>
+            <li>انخفاض الرغبة وفتور تجاه الشريكة</li>
+            <li>قلق وتوتر قبل اللقاء الحميم</li>
+            <li>إرهاق دائم وفقدان الحماس والثقة</li>
+            <li>توتر وخلافات متكررة في العلاقة الزوجية</li>
+          </ul>
+          <p>
+            هذه ليست مجرد «مشكلة في غرفة النوم»…
+            بل <strong>أزمة تمتد إلى كل تفاصيل حياة الرجل</strong>: عمله، نومه، علاقاته، ونظرته لنفسه.
+          </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[
-            "دعم الانتصاب القوي",
-            "المساعدة في تأخير القذف",
-            "تحسين الثقة أثناء العلاقة",
-            "تعزيز الأداء والقدرة على التحمل",
-            "نتائج سريعة وملموسة",
-            "تركيبة آمنة 100% طبيعية",
-          ].map((b, i) => (
-            <div key={i} className="rounded-2xl p-5 border bg-white flex items-start gap-3 hover:-translate-y-0.5 transition" style={{ borderColor: "#EEF2F7" }}>
-              <div className="w-10 h-10 rounded-full shrink-0 flex items-center justify-center" style={{ background: `linear-gradient(135deg, ${GOLD_LIGHT}, ${GOLD})` }}>
-                <CheckCircle2 size={20} style={{ color: NAVY_DARK }} />
-              </div>
-              <div className="font-bold pt-1.5" style={{ color: NAVY }}>{b}</div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* LIFESTYLE */}
-      <section className="py-12 sm:py-16" style={{ background: NAVY_DARK }}>
-        <div className="max-w-5xl mx-auto px-4 grid md:grid-cols-2 gap-8 items-center">
-          <img src={lifestyleImg} alt="رجل واثق بنفسه" className="rounded-2xl shadow-2xl w-full h-auto" loading="lazy" width={1024} height={768} />
-          <div className="text-white">
-            <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>تغيير حقيقي</div>
-            <h2 className="text-2xl sm:text-4xl font-black mb-4">رجل جديد. ثقة جديدة. حياة جديدة.</h2>
-            <p className="text-white/80 leading-relaxed mb-5">
-              آلاف الرجال استعادوا قوتهم وثقتهم بفضل دراغون باور 9000. الآن دورك لتختبر الفرق بنفسك.
-            </p>
-            <a href={ctaTarget} className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-black" style={{ background: `linear-gradient(180deg, ${GOLD_LIGHT}, ${GOLD})`, color: NAVY_DARK }}>
-              اطلب الآن وابدأ التغيير ←
-            </a>
-          </div>
+        {/* Scientific explanation */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>السبب العلمي… الذي لا أحد يخبرك به</h2>
+        <figure className="my-4">
+          <img src={circulationImg} alt="رسم توضيحي للدورة الدموية" className="w-full h-56 sm:h-72 object-cover rounded-md bg-neutral-50" loading="lazy" />
+          <figcaption className="text-xs text-neutral-500 mt-2 text-center">الدورة الدموية والاستجابة العصبية — حجر الأساس للأداء الجنسي.</figcaption>
+        </figure>
+        <div className="text-[17px] leading-loose space-y-4 text-neutral-800">
+          <p>
+            بحسب المختصين، يحدث الانتصاب نتيجة <strong>تدفق كافٍ للدم إلى الأنسجة الإسفنجية</strong>،
+            بينما يعتمد التحكم في القذف على <strong>توازن الاستجابة العصبية</strong>.
+            ضعف أيٍّ من العاملين يسبب المشكلة:
+          </p>
+          <ol className="list-decimal pr-6 space-y-2 marker:font-bold" style={{ listStyleType: "decimal" }}>
+            <li><strong>صحة الدورة الدموية</strong> — الشرايين المرنة تسمح بتدفق دم قوي وسريع.</li>
+            <li><strong>تنظيم الحساسية العصبية</strong> — تأخير الإشارة العصبية للتحكم بمدة أطول.</li>
+            <li><strong>دعم الحيوية الذكورية</strong> — توازن الطاقة والقدرة على التحمل.</li>
+          </ol>
+          <p>
+            عوامل نمط الحياة الحديث — <strong>الأطعمة المصنّعة، قلة النوم، الضغط النفسي، التدخين</strong> —
+            تضرب هذه العوامل دفعة واحدة. والنتيجة: ضعف انتصاب، قذف سريع، وفقدان الثقة.
+          </p>
         </div>
-      </section>
 
-      {/* TESTIMONIALS */}
-      <section className="max-w-5xl mx-auto px-4 py-12 sm:py-16">
-        <div className="text-center mb-10">
-          <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>شهادات حقيقية</div>
-          <h2 className="text-2xl sm:text-4xl font-black" style={{ color: NAVY }}>ماذا يقول الرجال عن دراغون باور؟</h2>
-          <div className="flex items-center justify-center gap-1 mt-3">
-            {[1,2,3,4,5].map(i => <Star key={i} size={18} fill={GOLD} stroke={GOLD} />)}
-            <span className="text-sm text-neutral-600 mr-2">4.9/5 من أكثر من 12,400 عميل</span>
+        {/* Expert quote */}
+        <blockquote className="mt-6 text-white rounded-md p-5 sm:p-6" style={{ background: "#0B2545" }}>
+          <div className="text-5xl leading-none mb-2" style={{ color: "#C9A84C" }}>”</div>
+          <p className="text-lg sm:text-xl font-medium leading-relaxed">
+            معظم حالات ضعف الأداء التي أراها في عيادتي ليست أمراضاً مزمنة…
+            بل ناتجة عن ضعف الدورة الدموية وارتفاع الحساسية العصبية.
+            دعم الجسم بمكونات نباتية موضعية صحيحة قد يحدث فرقاً ملحوظاً خلال أيام.
+          </p>
+          <footer className="mt-4 text-sm text-neutral-300">— د. سامي القحطاني، استشاري صحة الرجل</footer>
+        </blockquote>
+
+        {/* Doctor */}
+        <figure className="my-6">
+          <img src={doctorImg} alt="طبيب مختص" className="w-full h-56 sm:h-72 object-cover rounded-md" loading="lazy" />
+          <figcaption className="text-xs text-neutral-500 mt-2 text-center">المختصون يؤكدون أهمية الحلول الموضعية الطبيعية.</figcaption>
+        </figure>
+
+        {/* Discovery */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>الاكتشاف الذي يتحدث عنه الجميع</h2>
+        <figure className="my-4">
+          <img
+            src={productDiscovery}
+            alt="مكونات Dragon Power 9000 العشبية"
+            className="w-full h-56 sm:h-80 object-cover rounded-md"
+            loading="lazy"
+          />
+          <figcaption className="text-xs text-neutral-500 mt-2 text-center">
+            مكونات نباتية مستوحاة من الطب التقليدي ومدعومة بأبحاث في صحة الرجل.
+          </figcaption>
+        </figure>
+        <div className="text-[17px] leading-loose space-y-4 text-neutral-800">
+          <p>
+            بعد سنوات من البحث، طوّر فريق طبي تركيبة <strong>موضعية على شكل بخاخ</strong> تستهدف
+            الأسباب الثلاثة معاً: تحسين تدفق الدم، تنظيم الحساسية العصبية للتحكم الأفضل،
+            ودعم الحيوية الذكورية. أُطلق عليها اسم <strong>Dragon Power 9000</strong>.
+          </p>
+          <p>
+            ما لفت الانتباه أن المستخدمين يصفون النتائج بأنها <strong>سريعة وملموسة من أول استخدام</strong>:
+            انتصاب أقوى، تحكم أطول بكثير، وثقة استثنائية في النفس.
+          </p>
+          <div className="flex justify-center my-4">
+            <img src={productImage} alt="بخاخ Dragon Power 9000" className="w-48 sm:w-64 h-auto object-contain" loading="lazy" />
           </div>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {testimonials.map((t, i) => (
-            <div key={i} className="rounded-2xl p-5 bg-white border shadow-sm" style={{ borderColor: "#EEF2F7" }}>
-              <div className="flex items-center gap-1 mb-2">
-                {[1,2,3,4,5].map(s => <Star key={s} size={12} fill={GOLD} stroke={GOLD} />)}
-              </div>
-              <p className="text-sm text-neutral-700 leading-relaxed mb-3">"{t.text}"</p>
-              <div className="text-xs font-bold" style={{ color: NAVY }}>{t.name} · {t.age} سنة</div>
-              <div className="text-xs text-neutral-500">{t.city}</div>
-            </div>
-          ))}
-        </div>
-      </section>
 
-      {/* DOCTOR */}
-      <section className="py-12 sm:py-16" style={{ background: "#F8FAFC" }}>
-        <div className="max-w-5xl mx-auto px-4 grid md:grid-cols-2 gap-8 items-center">
-          <img src={doctorImg} alt="توصية طبية" className="rounded-2xl shadow-lg w-full h-auto border" style={{ borderColor: "#EAEAEA" }} loading="lazy" width={1024} height={768} />
-          <div>
-            <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>رأي المختصين</div>
-            <h2 className="text-2xl sm:text-4xl font-black mb-4" style={{ color: NAVY }}>ماذا يقول المختصون؟</h2>
-            <blockquote className="border-r-4 pr-4 text-neutral-700 leading-loose mb-4" style={{ borderColor: GOLD }}>
-              "دراغون باور 9000 تركيبة طبية متوازنة تجمع بين مكونات طبيعية مدروسة. ألاحظ تحسناً ملموساً لدى المرضى الذين يلتزمون بالاستخدام، خاصة في جوانب الأداء والثقة."
-            </blockquote>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center font-black" style={{ background: NAVY, color: GOLD }}>د.</div>
-              <div>
-                <div className="font-bold" style={{ color: NAVY }}>استشاري الصحة الذكورية</div>
-                <div className="text-xs text-neutral-500">عضو الجمعية الدولية للطب التكميلي</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section className="max-w-3xl mx-auto px-4 py-12 sm:py-16">
-        <div className="text-center mb-8">
-          <div className="text-xs font-bold tracking-widest mb-2" style={{ color: GOLD }}>الأسئلة الشائعة</div>
-          <h2 className="text-2xl sm:text-4xl font-black" style={{ color: NAVY }}>كل ما تحتاج معرفته</h2>
-        </div>
+        {/* Ingredients breakdown */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>المكونات الفعالة وكيف تعمل</h2>
         <div className="space-y-3">
-          {faqs.map((f, i) => (
-            <div key={i} className="rounded-xl border bg-white overflow-hidden" style={{ borderColor: "#EEF2F7" }}>
-              <button onClick={() => setOpenFaq(openFaq === i ? null : i)} className="w-full flex items-center justify-between text-right px-5 py-4 font-bold" style={{ color: NAVY }}>
-                <span>{f.q}</span>
-                <ChevronDown size={18} className={`transition ${openFaq === i ? "rotate-180" : ""}`} style={{ color: GOLD }} />
-              </button>
-              {openFaq === i && (
-                <div className="px-5 pb-5 text-sm text-neutral-700 leading-relaxed border-t" style={{ borderColor: "#EEF2F7" }}>
-                  <div className="pt-3">{f.a}</div>
+          {[
+            { n: "خلاصة الجينسنغ الكوري", d: "يدعم تدفق الدم عبر تحفيز إنتاج أكسيد النيتريك المسؤول عن توسيع الأوعية الدموية." },
+            { n: "مستخلص الماكا البيروفية", d: "جذور أنديزية تقليدية تُستخدم لدعم الرغبة والطاقة الذكورية والقدرة على التحمل." },
+            { n: "زيت القرنفل الطبيعي", d: "يساعد على تنظيم الحساسية العصبية الموضعية للمساهمة في التحكم الأفضل بمدة العلاقة." },
+            { n: "L-أرجينين", d: "حمض أميني يتحول داخل الجسم إلى أكسيد النيتريك لتحسين تدفق الدم وقوة الانتصاب." },
+            { n: "خلاصة ترايبولوس", d: "نبتة تقليدية شهيرة تساعد الجسم على دعم مستويات التستوستيرون الطبيعية." },
+            { n: "مستخلصات نباتية مهدّئة", d: "تخفّف التوتر العصبي وتدعم استرخاء الجسم لأداء أفضل وأطول." },
+          ].map((b, i) => (
+            <div key={i} className="flex gap-3 bg-neutral-50 border border-neutral-200 rounded-md p-4">
+              <span className="font-black text-xl shrink-0" style={{ color: "#C9A84C" }}>✓</span>
+              <div>
+                <div className="font-bold text-neutral-900 mb-1">{b.n}</div>
+                <div className="text-[15px] text-neutral-700 leading-relaxed">{b.d}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-neutral-500 mt-3">
+          * هذه عبارات داعمة لنمط حياة صحي ولا تُعدّ ادعاءً علاجياً أو تشخيصاً طبياً.
+        </p>
+
+        {/* Real user transformation story */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>قصة كريم… كيف استعاد ثقته في 14 يوماً</h2>
+        <figure className="my-4">
+          <img src={lifestyleImg} alt="رجل واثق بنفسه" className="w-full h-56 sm:h-72 object-cover rounded-md" loading="lazy" />
+        </figure>
+        <div className="text-[17px] leading-loose space-y-4 text-neutral-800">
+          <p>
+            <strong>كريم، 41 عاماً، موظف وأب لطفلين</strong>، كان يعيش ما يصفه بـ«أصعب مرحلة في حياته».
+            بدأ يلاحظ ضعفاً وسرعة في النهاية قبل عامين، فحاول التجاهل. لكن الأمور ساءت
+            حتى وصل لمرحلة بدأ يتجنّب فيها زوجته تماماً.
+          </p>
+          <p>
+            «<em>كنت أشعر أني فقدت رجولتي. صرت أنام مبكراً، أصرخ على أولادي بدون سبب،
+            وأشعر أن زوجتي تنظر إليّ بشفقة. كنت محطماً من الداخل.</em>»
+          </p>
+          <p>
+            بعد أن قرأ مقالاً عن <strong>Dragon Power 9000</strong>، قرر أن يجرّب — كآخر محاولة.
+            من <strong>أول استخدام</strong> لاحظ تحكّماً لم يعرفه منذ سنوات. خلال أسبوعين كانت زوجته أول من لاحظ الفرق.
+          </p>
+          <div className="grid grid-cols-2 gap-3 my-4">
+            <div className="border rounded-md p-4 text-center" style={{ background: "#FEF2F2", borderColor: "#FCA5A5" }}>
+              <div className="text-xs font-bold mb-1" style={{ color: "#B91C1C" }}>قبل</div>
+              <div className="text-sm text-neutral-700 leading-relaxed">قلق · ضعف أداء · نهاية مبكرة · تجنّب · فقدان ثقة</div>
+            </div>
+            <div className="border rounded-md p-4 text-center" style={{ background: "#FFFBEB", borderColor: "#C9A84C" }}>
+              <div className="text-xs font-bold mb-1" style={{ color: "#92400E" }}>بعد 14 يوماً</div>
+              <div className="text-sm text-neutral-700 leading-relaxed">تحكم أطول · انتصاب أقوى · ثقة · علاقة أحلى</div>
+            </div>
+          </div>
+          <p>
+            «<em>اليوم، عادت ابتسامتي… وعادت العلاقة بيني وبين زوجتي أحلى من أيامنا الأولى.
+            لا أصدّق أن بخاخاً طبيعياً غيّر حياتي بهذا الشكل.</em>»
+          </p>
+        </div>
+
+        {/* Social proof */}
+        <h2 className="text-2xl font-black mt-10 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>آلاف الرجال استعادوا قوتهم</h2>
+        <div className="grid grid-cols-3 gap-3 mb-5 text-center">
+          <div className="text-white rounded-md p-3" style={{ background: "#0B2545" }}>
+            <div className="text-2xl font-black" style={{ color: "#C9A84C" }}>+18,200</div>
+            <div className="text-[10px] text-neutral-300 mt-1">عميل راضٍ</div>
+          </div>
+          <div className="text-white rounded-md p-3" style={{ background: "#0B2545" }}>
+            <div className="text-2xl font-black" style={{ color: "#C9A84C" }}>96%</div>
+            <div className="text-[10px] text-neutral-300 mt-1">نسبة الرضا</div>
+          </div>
+          <div className="text-white rounded-md p-3" style={{ background: "#0B2545" }}>
+            <div className="text-2xl font-black" style={{ color: "#C9A84C" }}>4.9★</div>
+            <div className="text-[10px] text-neutral-300 mt-1">متوسط التقييم</div>
+          </div>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          {[
+            { n: "خالد · 42 سنة · الرياض", t: "من أول استخدام لاحظت فرقاً في التحكم. زوجتي سعيدة وأنا استعدت ثقتي." },
+            { n: "سامي · 36 سنة · جدة", t: "كنت أعاني من قذف سريع وقلق دائم. اليوم الأمور طبيعية والحمد لله." },
+            { n: "ماجد · 51 سنة · الدمام", t: "في عمري ما توقعت أرجع لطاقتي. الفرق محسوس من أول رشّة." },
+            { n: "يوسف · 29 سنة · مكة", t: "البخاخ سهل الاستخدام والمفعول سريع جداً. غيّر علاقتي تماماً." },
+          ].map((r, i) => (
+            <div key={i} className="border border-neutral-200 rounded-md p-4 bg-white">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white" style={{ background: "#0B2545" }}>
+                  {r.n.charAt(0)}
+                </div>
+                <div>
+                  <div className="font-bold text-sm text-neutral-800">{r.n}</div>
+                  <div className="text-sm" style={{ color: "#C9A84C" }}>★★★★★ <span className="text-[10px] text-green-700 font-bold">✓ مستخدم موثّق</span></div>
+                </div>
+              </div>
+              <p className="text-[15px] leading-relaxed text-neutral-700">«{r.t}»</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Urgency */}
+        <div className="mt-10 border-2 rounded-md p-5" style={{ borderColor: "#0B2545", background: "#F8FAFC" }}>
+          <div className="font-black text-lg mb-2" style={{ color: "#0B2545" }}>⚠️ الكمية محدودة جداً</div>
+          <p className="text-neutral-800 text-[15px] leading-relaxed mb-4">
+            بسبب الإقبال الهائل بعد نشر التحقيق، نفذت كميات كبيرة من المخزون،
+            ولم يبقَ سوى عدد محدود من العبوات بسعر التحقيق الخاص. ينتهي العرض خلال:
+          </p>
+          <div className="flex justify-center gap-2 sm:gap-3">
+            {[
+              { v: pad(timeLeft.h), l: "ساعة" },
+              { v: pad(timeLeft.m), l: "دقيقة" },
+              { v: pad(timeLeft.s), l: "ثانية" },
+            ].map((u, i) => (
+              <div key={i} className="text-white rounded-md px-4 py-2 min-w-[70px] text-center" style={{ background: "#0B2545" }}>
+                <div className="text-2xl sm:text-3xl font-black tabular-nums" style={{ color: "#C9A84C" }}>{u.v}</div>
+                <div className="text-[10px] uppercase tracking-wider text-neutral-300">{u.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-8 text-center">
+          <Link
+            to="/order"
+            className="inline-block font-black text-lg sm:text-xl px-8 py-4 rounded-md shadow-lg transition-all transform hover:scale-105"
+            style={{ background: "linear-gradient(180deg, #E8C97A, #C9A84C)", color: "#0B2545" }}
+          >
+            ✅ تحقق من توفر Dragon Power 9000 الآن
+          </Link>
+          <div className="text-xs text-neutral-500 mt-3">الدفع عند الاستلام · شحن سريع · توفر مرهون بالكمية</div>
+        </div>
+
+        {/* Trust badges */}
+        <div className="mt-10 grid grid-cols-3 gap-3 text-center">
+          {[
+            { i: "🌿", t: "100% طبيعي" },
+            { i: "🔬", t: "مختبر سريرياً" },
+            { i: "🛡️", t: "جودة صيدلية" },
+          ].map((b, i) => (
+            <div key={i} className="border border-neutral-200 rounded-md p-3 bg-neutral-50">
+              <div className="text-2xl mb-1">{b.i}</div>
+              <div className="text-xs font-bold text-neutral-700">{b.t}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Comments */}
+        <h2 className="text-2xl font-black mt-12 mb-3 pr-3" style={{ borderRight: "4px solid #0B2545" }}>التعليقات (214)</h2>
+        <div className="space-y-4">
+          {[
+            { n: "أبو فهد", a: "قبل ساعة", t: "والله جربت كل شي قبل، هذي أول مرة أحس بفرق حقيقي من أول استخدام. شكراً.", l: 87 },
+            { n: "محمد .ع", a: "قبل 4 ساعات", t: "زوجتي هي اللي طلبت مني أكتب تعليق 😂 الفرق واضح من أول مرة.", l: 132 },
+            { n: "سعد القرني", a: "أمس", t: "هل آمن مع أدوية الضغط؟ سؤال جدي.", l: 19, reply: "البخاخ موضعي ومكوناته طبيعية، لكن يُنصح دائماً باستشارة الطبيب قبل البدء." },
+            { n: "بلال", a: "قبل يومين", t: "طلبته لأخوي وصار يحكيلي عن نتائج خرافية. شي ممتاز.", l: 74 },
+            { n: "Anonymous", a: "قبل 3 أيام", t: "كنت محرج أعلق… لكن أقول للجميع: لا تستحوا، جربوه. غيّر علاقتي تماماً.", l: 198 },
+          ].map((c, i) => (
+            <div key={i} className="border-b border-neutral-200 pb-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-white text-sm" style={{ background: "#0B2545" }}>{c.n.charAt(0)}</div>
+                <div className="flex-1">
+                  <div className="font-bold text-sm text-neutral-800">{c.n}</div>
+                  <div className="text-xs text-neutral-500">{c.a}</div>
+                </div>
+              </div>
+              <p className="text-[15px] text-neutral-700 leading-relaxed mb-2">{c.t}</p>
+              {c.reply && (
+                <div className="mr-12 mt-2 bg-neutral-50 p-3 rounded text-[14px] text-neutral-700" style={{ borderRight: "2px solid #C9A84C" }}>
+                  <strong className="text-neutral-900">↳ رد المحرر:</strong> {c.reply}
                 </div>
               )}
+              <div className="flex gap-4 text-xs text-neutral-500 mt-2">
+                <span>👍 {c.l}</span>
+                <span>رد</span>
+              </div>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* FINAL CTA */}
-      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: `linear-gradient(135deg, ${NAVY} 0%, ${NAVY_DARK} 100%)` }}>
-        <div className="max-w-3xl mx-auto px-4 text-center text-white relative">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold mb-4" style={{ background: "rgba(239,68,68,0.15)", color: "#FCA5A5", border: "1px solid #EF4444" }}>
-            <Clock size={12} /> الكمية محدودة بسبب الطلب الكبير
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-black mb-4">ابدأ التغيير الحقيقي اليوم</h2>
-          <p className="text-white/85 mb-2">لم يتبقَ سوى <span className="font-black" style={{ color: GOLD }}>{stock} عبوة</span> في المخزون.</p>
-          <p className="text-white/70 text-sm mb-6">الدفع عند الاستلام · شحن سريع · ضمان الاسترجاع</p>
-          <a href={ctaTarget} className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-10 py-4 rounded-xl font-black text-lg shadow-2xl active:scale-95 transition" style={{ background: `linear-gradient(180deg, ${GOLD_LIGHT}, ${GOLD})`, color: NAVY_DARK }}>
-            اطلب الآن ←
-          </a>
-          <div className="flex items-center justify-center gap-5 mt-6 text-xs text-white/70">
-            <div className="flex items-center gap-1"><ShieldCheck size={12} /> ضمان الجودة</div>
-            <div className="flex items-center gap-1"><Truck size={12} /> توصيل لكل المدن</div>
-            <div className="flex items-center gap-1"><Lock size={12} /> دفع آمن</div>
-          </div>
+        {/* Disclaimer */}
+        <div className="mt-10 border-t border-neutral-200 pt-5 text-xs text-neutral-500 leading-relaxed">
+          <strong>إخلاء مسؤولية:</strong> هذا المقال ذو طابع معلوماتي ولا يُعتبر استشارة طبية.
+          المنتج المذكور مكمل طبيعي ولا يُقصد به تشخيص أو علاج أو الوقاية من أي مرض.
+          النتائج قد تختلف من شخص لآخر. يُنصح باستشارة الطبيب قبل البدء بأي منتج.
         </div>
-      </section>
+      </article>
 
-      {/* Footer */}
-      <footer className="py-8 text-center text-xs text-neutral-500 border-t" style={{ borderColor: "#EAEAEA" }}>
-        <div>© {new Date().getFullYear()} Dragon Power 9000 · جميع الحقوق محفوظة</div>
-        <div className="mt-2 max-w-2xl mx-auto px-4 leading-relaxed">
-          هذا المنتج مكمل غذائي طبيعي وليس دواءً. النتائج قد تختلف من شخص لآخر. استشر طبيبك في حال وجود حالات صحية مزمنة.
-        </div>
+      <footer className="border-t border-neutral-200 mt-8 py-6 text-center text-xs text-neutral-500">
+        © {new Date().getFullYear()} المجلة الطبية · جميع الحقوق محفوظة
       </footer>
 
       {/* Sticky CTA */}
-      {showSticky && (
-        <div className="fixed bottom-0 inset-x-0 z-40 p-3 border-t shadow-2xl" style={{ background: "rgba(255,255,255,0.98)", borderColor: "#EAEAEA" }}>
-          <a href={ctaTarget} className="block max-w-md mx-auto text-center py-3.5 rounded-xl font-black active:scale-95 transition" style={{ background: `linear-gradient(180deg, ${GOLD_LIGHT}, ${GOLD})`, color: NAVY_DARK }}>
-            اطلب الآن — الكمية محدودة ←
-          </a>
+      <div
+        className={`fixed bottom-0 inset-x-0 z-50 transition-transform duration-300 ${
+          showStickyCta ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="bg-white shadow-2xl px-3 py-3" style={{ borderTop: "2px solid #C9A84C" }}>
+          <div className="max-w-3xl mx-auto flex items-center gap-3">
+            <img src={productImage} alt="Dragon Power 9000" className="w-12 h-12 object-contain shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="font-bold text-sm text-neutral-900 truncate">Dragon Power 9000</div>
+              <div className="text-[11px] font-semibold" style={{ color: "#0B2545" }}>⏱ ينتهي العرض خلال {pad(timeLeft.h)}:{pad(timeLeft.m)}:{pad(timeLeft.s)}</div>
+            </div>
+            <Link
+              to="/order"
+              className="font-black text-sm px-4 py-3 rounded-md shrink-0 shadow-md"
+              style={{ background: "linear-gradient(180deg, #E8C97A, #C9A84C)", color: "#0B2545" }}
+            >
+              اطلب الآن ←
+            </Link>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
