@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ShieldCheck, FlaskConical, Award, Truck, Star, Clock, ChevronDown, CheckCircle2, Activity, Zap, HeartPulse, Lock } from "lucide-react";
-import productImg from "@/assets/powerspry-product.jpg";
+import productImg from "@/assets/powerspry-product-real.png";
 import labImg from "@/assets/powerspry-lab.jpg";
 import circulationImg from "@/assets/powerspry-circulation.jpg";
 import lifestyleImg from "@/assets/powerspry-lifestyle.jpg";
