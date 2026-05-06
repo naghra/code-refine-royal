@@ -35,6 +35,7 @@ import AdminImportOrders from "./pages/admin/AdminImportOrders";
 import AdminAppStore from "./pages/admin/AdminAppStore";
 import AdminAppSettings from "./pages/admin/AdminAppSettings";
 import Prelander from "./pages/Prelander";
+import Powerspry from "./pages/Powerspry";
 
 
 const queryClient = new QueryClient({
@@ -73,6 +74,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/news" element={<Prelander />} />
           <Route path="/prelander" element={<Prelander />} />
+          <Route path="/powerspry" element={<Powerspry />} />
 
           {/* Admin Dashboard */}
           <Route path="/admin" element={<AdminLayout />}>
