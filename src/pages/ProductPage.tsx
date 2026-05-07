@@ -2,13 +2,13 @@ import { useState, lazy, Suspense } from "react";
 import { useParams } from "react-router-dom";
 import StoreHeader from "@/components/StoreHeader";
 import ProductDetails from "@/components/ProductDetails";
-import StoreFooter from "@/components/StoreFooter";
 import TrackingPixels from "@/components/TrackingPixels";
 import { useTrackVisit } from "@/hooks/useTrackVisit";
 
 // Lazy-load below-the-fold sections to speed up initial page render
 const ProductReviews = lazy(() => import("@/components/ProductReviews"));
 const SocialProofBar = lazy(() => import("@/components/SocialProofBar"));
+const StoreFooter = lazy(() => import("@/components/StoreFooter"));
 
 const ProductPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -40,11 +40,13 @@ const ProductPage = () => {
             <SocialProofBar />
           </Suspense>
         </div>
-        <Suspense fallback={null}>
+        <Suspense fallback={<div style={{ minHeight: 400 }} />}>
           <ProductReviews productId={productId} />
         </Suspense>
       </main>
-      <StoreFooter />
+      <Suspense fallback={<div style={{ minHeight: 200 }} />}>
+        <StoreFooter />
+      </Suspense>
     </div>
   );
 };
