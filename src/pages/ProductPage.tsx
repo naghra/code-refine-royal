@@ -4,6 +4,7 @@ import StoreHeader from "@/components/StoreHeader";
 import ProductDetails from "@/components/ProductDetails";
 import TrackingPixels from "@/components/TrackingPixels";
 import { useTrackVisit } from "@/hooks/useTrackVisit";
+import LazyVisible from "@/components/LazyVisible";
 
 // Lazy-load below-the-fold sections to speed up initial page render
 const ProductReviews = lazy(() => import("@/components/ProductReviews"));
@@ -36,17 +37,23 @@ const ProductPage = () => {
       <main className="flex-1">
         <div className="container">
           <ProductDetails productSlug={slug} onProductLoaded={setProductId} />
-          <Suspense fallback={null}>
-            <SocialProofBar />
-          </Suspense>
+          <LazyVisible minHeight={80}>
+            <Suspense fallback={null}>
+              <SocialProofBar />
+            </Suspense>
+          </LazyVisible>
         </div>
-        <Suspense fallback={<div style={{ minHeight: 400 }} />}>
-          <ProductReviews productId={productId} />
-        </Suspense>
+        <LazyVisible minHeight={400} rootMargin="400px">
+          <Suspense fallback={<div style={{ minHeight: 400 }} />}>
+            <ProductReviews productId={productId} />
+          </Suspense>
+        </LazyVisible>
       </main>
-      <Suspense fallback={<div style={{ minHeight: 200 }} />}>
-        <StoreFooter />
-      </Suspense>
+      <LazyVisible minHeight={200} rootMargin="400px">
+        <Suspense fallback={<div style={{ minHeight: 200 }} />}>
+          <StoreFooter />
+        </Suspense>
+      </LazyVisible>
     </div>
   );
 };
