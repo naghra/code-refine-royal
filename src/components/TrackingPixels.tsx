@@ -7,7 +7,7 @@ export default function TrackingPixels() {
   useEffect(() => {
     if (initialized) return;
 
-    (async () => {
+    const run = async () => {
       const { data } = await supabase
         .from("store_settings")
         .select("value")
@@ -77,7 +77,16 @@ export default function TrackingPixels() {
       }
 
       setInitialized(true);
-    })();
+    };
+
+    // Defer until the browser is idle so pixels never block first paint / TTI.
+    const w = window as any;
+    const idle = w.requestIdleCallback || ((cb: any) => setTimeout(cb, 1500));
+    const id = idle(run, { timeout: 3000 });
+    return () => {
+      const cancel = w.cancelIdleCallback || clearTimeout;
+      try { cancel(id); } catch {}
+    };
   }, [initialized]);
 
   return null;
