@@ -166,11 +166,13 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-10">
       {/* Product Image */}
       <div className="lg:w-1/2 lg:sticky lg:top-20 lg:self-start">
-        <div className="relative rounded-md overflow-hidden bg-secondary">
+        <div className="relative rounded-md overflow-hidden bg-secondary aspect-square">
           <img
             src={productImage}
             alt={name}
-            className="w-full h-auto object-contain"
+            width={800}
+            height={800}
+            className="w-full h-full object-contain"
             loading="eager"
             fetchPriority="high"
             decoding="async"
@@ -264,11 +266,11 @@ const ProductDetails = ({ productSlug, onProductLoaded }: { productSlug?: string
 
         {/* Payment Methods */}
         <section className="flex items-center justify-center gap-3 mb-5">
-          <img src={madeInKsaIcon} alt="صنع في السعودية" className="h-8" />
-          <img src={applePayIcon} alt="Apple Pay" className="h-8" />
-          <img src={bankIcon} alt="تحويل بنكي" className="h-8" />
-          <img src={codIcon} alt="الدفع عند الاستلام" className="h-8" />
-          <img src={sbcIcon} alt="SBC" className="h-8" />
+          <img src={madeInKsaIcon} alt="صنع في السعودية" width={32} height={32} className="h-8 w-auto" loading="lazy" decoding="async" />
+          <img src={applePayIcon} alt="Apple Pay" width={48} height={32} className="h-8 w-auto" loading="lazy" decoding="async" />
+          <img src={bankIcon} alt="تحويل بنكي" width={48} height={32} className="h-8 w-auto" loading="lazy" decoding="async" />
+          <img src={codIcon} alt="الدفع عند الاستلام" width={48} height={32} className="h-8 w-auto" loading="lazy" decoding="async" />
+          <img src={sbcIcon} alt="SBC" width={48} height={32} className="h-8 w-auto" loading="lazy" decoding="async" />
         </section>
 
         <div className="h-20 lg:hidden" />
