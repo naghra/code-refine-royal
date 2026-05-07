@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient } from "@tanstack/react-query";
@@ -6,36 +7,39 @@ import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persist
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import ProductPage from "./pages/ProductPage";
-import AboutUs from "./pages/AboutUs";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import ReturnPolicy from "./pages/ReturnPolicy";
-import Terms from "./pages/Terms";
-import FAQ from "./pages/FAQ";
-import Contact from "./pages/Contact";
-import NotFound from "./pages/NotFound";
-import ThankYou from "./pages/ThankYou";
-import GiftSelection from "./pages/GiftSelection";
-import OrderLanding from "./pages/OrderLanding";
-import ConfirmOrder from "./pages/ConfirmOrder";
-import ResetPassword from "./pages/ResetPassword";
-import AdminLayout from "./components/admin/AdminLayout";
-import AdminOrders from "./pages/admin/AdminOrders";
-import AdminConfirmedOrders from "./pages/admin/AdminConfirmedOrders";
-import AdminProducts from "./pages/admin/AdminProducts";
-import AdminProductEdit from "./pages/admin/AdminProductEdit";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminCodForm from "./pages/admin/AdminCodForm";
-import AdminAnalytics from "./pages/admin/AdminAnalytics";
-import AdminPages from "./pages/admin/AdminPages";
-import AdminGoogleSheets from "./pages/admin/AdminGoogleSheets";
-import AdminCodNetwork from "./pages/admin/AdminCodNetwork";
-import AdminCodNetworkSection from "./pages/admin/AdminCodNetworkSection";
-import AdminWhatsApp from "./pages/admin/AdminWhatsApp";
-import AdminImportOrders from "./pages/admin/AdminImportOrders";
-import AdminAppStore from "./pages/admin/AdminAppStore";
-import AdminAppSettings from "./pages/admin/AdminAppSettings";
-import Prelander from "./pages/Prelander";
-import Powerspry from "./pages/Powerspry";
+
+// Lazy-load every non-critical route to shrink the initial bundle.
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const ReturnPolicy = lazy(() => import("./pages/ReturnPolicy"));
+const Terms = lazy(() => import("./pages/Terms"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const Contact = lazy(() => import("./pages/Contact"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const ThankYou = lazy(() => import("./pages/ThankYou"));
+const GiftSelection = lazy(() => import("./pages/GiftSelection"));
+const OrderLanding = lazy(() => import("./pages/OrderLanding"));
+const ConfirmOrder = lazy(() => import("./pages/ConfirmOrder"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const Prelander = lazy(() => import("./pages/Prelander"));
+const Powerspry = lazy(() => import("./pages/Powerspry"));
+
+const AdminLayout = lazy(() => import("./components/admin/AdminLayout"));
+const AdminOrders = lazy(() => import("./pages/admin/AdminOrders"));
+const AdminConfirmedOrders = lazy(() => import("./pages/admin/AdminConfirmedOrders"));
+const AdminProducts = lazy(() => import("./pages/admin/AdminProducts"));
+const AdminProductEdit = lazy(() => import("./pages/admin/AdminProductEdit"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminCodForm = lazy(() => import("./pages/admin/AdminCodForm"));
+const AdminAnalytics = lazy(() => import("./pages/admin/AdminAnalytics"));
+const AdminPages = lazy(() => import("./pages/admin/AdminPages"));
+const AdminGoogleSheets = lazy(() => import("./pages/admin/AdminGoogleSheets"));
+const AdminCodNetwork = lazy(() => import("./pages/admin/AdminCodNetwork"));
+const AdminCodNetworkSection = lazy(() => import("./pages/admin/AdminCodNetworkSection"));
+const AdminWhatsApp = lazy(() => import("./pages/admin/AdminWhatsApp"));
+const AdminImportOrders = lazy(() => import("./pages/admin/AdminImportOrders"));
+const AdminAppStore = lazy(() => import("./pages/admin/AdminAppStore"));
+const AdminAppSettings = lazy(() => import("./pages/admin/AdminAppSettings"));
 
 
 const queryClient = new QueryClient({
@@ -58,6 +62,7 @@ const App = () => (
     <TooltipProvider>
       <Sonner />
       <BrowserRouter>
+        <Suspense fallback={<div style={{ minHeight: "100vh" }} />}>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/product/:slug" element={<ProductPage />} />
@@ -100,6 +105,7 @@ const App = () => (
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </TooltipProvider>
   </PersistQueryClientProvider>
